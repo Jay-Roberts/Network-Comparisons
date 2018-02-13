@@ -195,6 +195,8 @@ def SRNN_model_fn(features, labels, mode):
     #pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
     # Dense Layer
+
+    
     # Make sure size matches residual
     Residual_flat = tf.reshape(Residual, [-1, 28 * 28 * 16])
     dense = tf.layers.dense(inputs=Residual_flat, units=1024, activation=tf.nn.relu)
