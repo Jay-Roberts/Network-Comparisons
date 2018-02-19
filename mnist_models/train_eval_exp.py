@@ -32,7 +32,7 @@ def run_experiment(hparams):
     # Log the values in the "Softmax" tensor with label "probabilities"
     tensors_to_log = {"probabilities": "softmax_tensor"}
     logging_hook = tf.train.LoggingTensorHook(
-        tensors=tensors_to_log, every_n_iter=50)
+        tensors=tensors_to_log, every_n_iter=500)
 
     # Train the model
     train_input_fn = tf.estimator.inputs.numpy_input_fn(
@@ -45,8 +45,8 @@ def run_experiment(hparams):
     # Run Training
     mnist_classifier.train(
         input_fn=train_input_fn,
-        steps=hparams.train_steps,
-        hooks=[logging_hook])
+        steps=hparams.train_steps)
+        #hooks=[logging_hook])
 
 
     # Evaluate the model and print results
@@ -130,8 +130,8 @@ if __name__ == '__main__':
         Steps to run the training job for. If --num-epochs is not specified,
         this must be. Otherwise the training job will run indefinitely.\
         """,
-        type=int,
-        default=20
+        #type=int,
+        #default=20
     )
     parser.add_argument(
         '--eval-steps',
