@@ -163,7 +163,7 @@ def test_fn(features, labels, mode):
 #   
 #---------------------------------------------------------------------------------------------------
 
-def SRNN_model_fn(features, labels, mode):
+def SRNN_2_model_fn(features, labels, mode):
     """
     name: SRNN_2
     """
@@ -253,5 +253,5 @@ def SRNN_model_fn(features, labels, mode):
 # Add any new model functions here with a unique identifier
 Model_Functions = {
     'Test': test_fn,
-    'SRNN_2': SRNN_model_fn
+    'SRNN_2': SRNN_2_model_fn
 }
