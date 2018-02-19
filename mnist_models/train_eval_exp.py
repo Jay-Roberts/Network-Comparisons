@@ -90,7 +90,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--save-dir',
         help='Where to save experiment information',
-        nargs='+',
+        type=str,
         default='Testit'
     )
     parser.add_argument(
