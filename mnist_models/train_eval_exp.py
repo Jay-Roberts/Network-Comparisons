@@ -83,7 +83,7 @@ if __name__ == '__main__':
         '--model-fn',
         help='The model in trainer file to run task on',
         type=str,
-        choices=['Test','SRNN_2'],
+        choices=['Test','SRNN_2','SRNN_10','SRNN_20'],
         default='Test'
     )
 
