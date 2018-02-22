@@ -209,6 +209,7 @@ def test_fn(features, labels, mode):
 
 def SRNN_2_model_fn(features, labels, mode):
     """
+    A in-2-out  SRNN
     name: SRNN_2
     """
     print('MODE:',mode)
@@ -290,6 +291,7 @@ def SRNN_2_model_fn(features, labels, mode):
 
 def SRNN_10_model_fn(features, labels, mode):
     """
+    A in-10-out SRNN
     name: SRNN_10
     """
     print('MODE:',mode)
@@ -365,7 +367,8 @@ def SRNN_10_model_fn(features, labels, mode):
 
 def SRNN_20_model_fn(features, labels, mode):
     """
-    name: SRNN_2
+    A in-20-out SRNN
+    name: SRNN_20
     """
     print('MODE:',mode)
 
