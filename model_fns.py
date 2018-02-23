@@ -5,85 +5,9 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow as tf
+import support_fns as sfn
 
 tf.logging.set_verbosity(tf.logging.INFO)
-
-#-----------------------------------------------
-#           Define blocks here
-#-----------------------------------------------
-
-# Basic convolutional layer
-def basic_layer(input_layer, dt, scope):
-    """
-    Explicit Euler block with two branchs, stochastic and determinsitic,\
-    both of which are two convolution layers.
-    """
-
-    # Compute Deterministic function
-    fdd = tf.layers.conv2d(
-        inputs=input_layer,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-    
-    fd = tf.layers.conv2d(
-        inputs=fdd,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-
-    return tf.add( input_layer, tf.add( tf.scalar_mul(dt,fd)))
-
-
-
-# Residual Stochastic Convolutional Layer
-# This corresponds to Strong Explicit Euler-Maruyama
-def sNN_layer(input_layer, dt, scope):
-    """
-    Strong Explicit Euler-Maruyama block with two branchs, stochastic and determinsitic,\
-    both of which are two convolution layers.
-    """
-
-    # Initialize Diagonal noise
-    dz = tf.random_normal(tf.shape(input_layer))
-    root_dt = tf.sqrt(dt)
-
-    # Compute Stochastic function 
-    # Need two layers for better approximation
-    fss = tf.layers.conv2d(
-        inputs=input_layer,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-
-    fs = tf.layers.conv2d(
-        inputs=fss,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-
-    # Compute Deterministic function
-    fdd = tf.layers.conv2d(
-        inputs=input_layer,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-    
-    fd = tf.layers.conv2d(
-        inputs=fdd,
-        filters=16,
-        kernel_size=[5, 5], # Make small to allow for more layers
-        padding="same",
-        activation=tf.nn.relu)
-
-    return tf.add( input_layer, tf.add( tf.scalar_mul(dt,fd) , tf.scalar_mul( root_dt, tf.multiply(fs,dz) ) ) )
-
-
 
 #-----------------------------------------------
 #           Define model fns here
@@ -209,8 +133,11 @@ def test_fn(features, labels, mode):
 
 def SRNN_2_model_fn(features, labels, mode):
     """
-    A in-2-out  SRNN
-    name: SRNN_2
+    A 20 layer Stochastic Residual network. Interpreted as propogating up to time T = 1.
+    name: SRNN_2 \
+    Input size: 28x28x1 \
+    dt = 0.5
+    
     """
     print('MODE:',mode)
 
@@ -227,9 +154,9 @@ def SRNN_2_model_fn(features, labels, mode):
         activation=tf.nn.relu)
 
     # Step size - set for stability
-    dt = 0.1
+    dt = 0.5
 
-    Residual = tf.contrib.layers.repeat(conv0, 2, sNN_layer, dt, scope='')
+    Residual = tf.contrib.layers.repeat(conv0, 2, sfn.sNN_layer, dt, scope='')
 
     # Remove pool to preserve size
     #pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
@@ -291,8 +218,10 @@ def SRNN_2_model_fn(features, labels, mode):
 
 def SRNN_10_model_fn(features, labels, mode):
     """
-    A in-10-out SRNN
-    name: SRNN_10
+    A 10 layer Stochastic Residual network. Interpreted as propogating up to time T = 1.
+    name: SRNN_10 \
+    Input size: 28x28x1 \
+    dt = 0.1  
     """
     print('MODE:',mode)
 
@@ -311,7 +240,7 @@ def SRNN_10_model_fn(features, labels, mode):
     # Step size - set for stability
     dt = 0.1
 
-    Residual = tf.contrib.layers.repeat(conv0, 10, sNN_layer, dt, scope='')
+    Residual = tf.contrib.layers.repeat(conv0, 10, sfn.sNN_layer, dt, scope='')
     # Dense Layer
 
     # Make sure size matches residual
@@ -367,8 +296,10 @@ def SRNN_10_model_fn(features, labels, mode):
 
 def SRNN_20_model_fn(features, labels, mode):
     """
-    A in-20-out SRNN
-    name: SRNN_20
+    A 20 layer Stochastic Residual network. Interpreted as propogating up to time T = 1.
+    Name: SRNN_20 \
+    Input size: 28x28x1 \
+    dt = 0.05
     """
     print('MODE:',mode)
 
@@ -385,9 +316,9 @@ def SRNN_20_model_fn(features, labels, mode):
         activation=tf.nn.relu)
 
     # Step size - set for stability
-    dt = 0.1
+    dt = 0.05
 
-    Residual = tf.contrib.layers.repeat(conv0, 20, sNN_layer, dt, scope='')
+    Residual = tf.contrib.layers.repeat(conv0, 20, sfn.sNN_layer, dt, scope='')
 
     # Dense Layer
     Residual_flat = tf.reshape(Residual, [-1, 28 * 28 * 16])
