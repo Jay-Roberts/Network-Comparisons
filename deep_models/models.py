@@ -35,6 +35,7 @@ class ExpModel:
             self.stoch = True
         else:
             self.stoch = False
+        
         if input_fn == 'mnist':
             self.input_fn = input_fn
         else:
@@ -58,11 +59,17 @@ class ExpModel:
             self.in_res = list((input_shape[0],input_shape[1],1))
 
         # Make the model function
-        def mk_model_fn(features, labels, mode):
+        def mk_model_fn(features,labels=None,mode=None):
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
             input_layer = tf.reshape(features["x"], [-1]+self.in_res)
+
+            # MNIST is fed labels directly
+            # Need to pick out features for the training of other models
+            if not self.input_fn == 'mnist':
+                labels = features["y"]
+                
             
             # Initial convolution layer
             kernel_size, filters = self.conv_shape
@@ -208,17 +215,18 @@ class ExpModel:
             # Handle non mnist data
             else:
                 # Get the train input function
-                train_input = lambda: self.input_fn('train',file_dir = data_dir,
+                train_input = lambda: self.input_fn('train',file_dir = [data_dir],
                     num_epochs=train_epochs,
                     batch_size=batch_size)
 
                 # Don't shuffle evaluation data
-                eval_input = lambda: self.input_fn('val', file_dir= data_dir,
+                eval_input = lambda: self.input_fn('val', file_dir=[data_dir],
                     batch_size=1,
                     shuffle=False)
                 
-                feature_spec = {'image':tf.placeholder(dtype=tf.float32,shape = self.in_res),
-                                'label':tf.placeholder(dtype = tf.int32,shape = [1])}
+                # Make the feature spec for exporting
+                feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = self.in_res),
+                                "y":tf.placeholder(dtype = tf.int32,shape = [1])}
 
             #Train the model
             classifier.train(train_input,
@@ -226,7 +234,7 @@ class ExpModel:
                             )
 
             # Evaluate the model
-            eval_name = '/'.join([model_dir,self.input_fn,'_eval'])
+            eval_name = '/'.join([model_dir,input_fn,'_eval'])
             classifier.evaluate(eval_input,
                                 steps = eval_steps,
                                 name=eval_name)

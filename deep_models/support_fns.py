@@ -10,7 +10,9 @@ from __future__ import print_function
 
 import numpy as np
 import glob
+import os
 import tensorflow as tf
+import multiprocessing as mp
 
 
 #-----------------------------------------------
@@ -95,7 +97,7 @@ def Stf_EM(input_layer, dt, shape, scope):
 
 
 
-
+# Dictionary of available blocks
 BLOCKS = {'f_E':f_E,
            'Stf_EM': Stf_EM}
 
@@ -145,8 +147,8 @@ def screen_shot_parser(serialized_example):
     image =  tf.reshape(image, [28, 28,3])
 
     # No longer returning label
-    #label = tf.cast(features['label'], tf.int32)
-    return {"x":image}
+    label = tf.cast(features['label'], tf.int32)
+    return {"x":image,"y":label}
 
 
 # The input function
@@ -193,7 +195,7 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
     # Shuffling and batching can be slow
     # get more resources
     num_slaves = mp.cpu_count()
-    dataset = dataset.map(my_parser,num_parallel_calls=num_slaves)
+    dataset = dataset.map(screen_shot_parser,num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
     dataset = dataset.prefetch(batch_size)
@@ -207,4 +209,5 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
 
     return features
 
+# Dictionary of available input functions
 INPUT_FNS= {'screen_shots':screen_shot_input_fn}
