@@ -26,10 +26,8 @@ def get_name(tag):
     """
     game,name,file_dir = tag
     path = '/'.join([file_dir,game,name])
-    print(path)
     
     records = glob.glob(path+'*.tfrecords')    
-    print('recs: ',records)
     return records
 
 # joins lists of lists
@@ -42,7 +40,6 @@ def join_list(l):
 # Reads the tf.Example files
 def screen_shot_parser(serialized_example):
     """Parses a single tf.Example into image and label tensors."""
-    print('HERE', serialized_example)
 
     # The tfrecord to has an image and its label
     features = tf.parse_single_example(
@@ -83,7 +80,6 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
     file_dir = file_dir[0]
         
     game_IDs = os.listdir(file_dir)
-    print(game_IDs)
     num_games = len(game_IDs)
     files = [file_dir]*num_games
     names = [name]*num_games
@@ -92,7 +88,6 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
     games = zip(game_IDs,names,files)
     filenames = list(map(get_name,games))
     filenames = join_list(filenames)
-    print('files found: ' ,filenames)
 
     # Import image data
     dataset = tf.data.TFRecordDataset(filenames)
