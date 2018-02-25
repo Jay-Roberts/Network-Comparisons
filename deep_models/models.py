@@ -1,8 +1,10 @@
 import tensorflow as tf
 from deep_models import train_eval_exp
 from deep_models import blocks
+from deep_models import predict
 import numpy as np
 import pandas as pd 
+import os
 
 class ExpModel:
     def __init__(self,block,depth,input_fn,
@@ -262,21 +264,23 @@ class ExpModel:
         #----------------------------------------
 
 
-        def mk_prediction(data_dir, model_dir,
+        def mk_prediction(save_dir,
+                            data_dir='test_images',
                             labels_file = 'labels_key.csv',
                             col_names = ['NAME','LABEL'],
+                            out_name = 'predicitons'
                             ):
             """
             Predict classes from raw image files. 
+            save_dir: Directory containing model's .pd file. (str)
             data_dir: Directory containing images to classify. (str)
-            model_dir: Directory containing model's .pd file. (str)
             labels_file: Name of the csv file with the labels to category mapping. (str)
             col_names: Name of the columns from the csv labels_file. 'NAME' should be actual\
             class name. 'LABEL' is the integer label used in the model.(list)
             """
 
             wrk_dir = os.getcwd()
-            graph_path = '/'.join([wrk_dir,model_dir])
+            graph_path = '/'.join([wrk_dir,self.model_dir,save_dir])
             print('Graph path: %s'%(graph_path))
 
             # Get image directory and image path names
@@ -291,25 +295,29 @@ class ExpModel:
 
             else:
                 # Get the labels key
-                labels_key = pd.read_csv('labels_key.csv')
+                labels_key = pd.read_csv(labels_file)
+                print(labels_key.head())
 
                 # Translate the columns
                 translate = {col_names[0]: 'NAME', col_names[1]: 'LABEL'}
+                print(translate)
                 labels_key = labels_key.rename(columns=translate)
+                print(labels_key.head())
                 
 
-            names = list(labels_key['CLASS'])
+            names = list(labels_key['NAME'])
 
             
             # Get prediction results
-            results =predict_imgs(images,graph_path,res=self.input_shape)
+            results =predict.predict_imgs(images,graph_path,res=self.input_shape)
 
             # Format them to be a DataFrame
             results = list(zip(results['names'],results['confidences'],results['inferences']))
-
+            print('results',results)
             for rix in range(len(results)):
                 name, conf, infer = results[rix]
                 # Switch inference from label to gameID
+                print(infer)
                 infer = [names[infer[0]]]
                 results[rix] = name+conf+infer
 
@@ -322,12 +330,9 @@ class ExpModel:
             results_df[names] = results_df[names].apply(lambda x: pd.Series.round(x,4))
 
             # Save the results
-            results_df.to_csv(args.save+'.csv')
+            results_df.to_csv(out_name+'.csv')
 
         self.predict = mk_prediction
-
-
-
 
 
     def describe(self):
