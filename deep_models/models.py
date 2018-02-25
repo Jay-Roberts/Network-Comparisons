@@ -1,13 +1,14 @@
 import tensorflow as tf
-from deep_models import support_fns as spf
+from deep_models import train_eval_exp
+from deep_models import blocks
 import numpy as np
+import pandas as pd 
 
 class ExpModel:
     def __init__(self,block,depth,input_fn,
                     model_dir='Models',
-                    color=False,
+                    input_shape=(28,28,3),
                     num_classes=10,
-                    input_shape=(28,28),
                     conv = [5,16],
                     dt=.1,
                     activation=tf.nn.relu):
@@ -29,7 +30,8 @@ class ExpModel:
         """
 
         # Save attributes
-        self.model_dir = model_dir
+        self.model_dir = model_dir  
+
         # input_fn based on data type attribute
         if block[0]=='S':
             self.stoch = True
@@ -38,32 +40,32 @@ class ExpModel:
         
         if input_fn == 'mnist':
             self.input_fn = input_fn
+            self.input_shape = (28,28,1)
         else:
-            self.input_fn = spf.INPUT_FNS[input_fn]
-
-        # See if stochastic
+            self.input_fn = train_eval_exp.INPUT_FNS[input_fn]
+            self.input_shape = input_shape
 
         # Deep layer attributes
         self.depth = depth
-        self.block_fn = spf.BLOCKS[block]
-        self.conv_shape = conv
-        self.act = activation
-        self.dt = dt
+        self.act = activation   
+        self.block_fn = blocks.BLOCKS[block]    # Block type
+        self.conv_shape = conv  # Convolution shape
+        self.dt = dt    # Step size
 
         # First and last layer attributes
-        self.classes = num_classes
 
-        if color:
-            self.in_res = list((input_shape[0],input_shape[1],3))
-        else:
-            self.in_res = list((input_shape[0],input_shape[1],1))
+        self.classes = num_classes  # Number of names to categorize
+        
 
-        # Make the model function
+        #----------------------------------------
+        #       MODEL FUNCTION
+        #----------------------------------------
+
         def mk_model_fn(features,labels=None,mode=None):
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
-            input_layer = tf.reshape(features["x"], [-1]+self.in_res)
+            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
 
             # MNIST is fed labels directly
             # Need to pick out features for the training of other models
@@ -94,7 +96,7 @@ class ExpModel:
 
             # Dense Layer
             # Make sure size matches Deep
-            Deep_size = self.in_res[0]*self.in_res[1]*self.conv_shape[1]
+            Deep_size = self.input_shape[0]*self.input_shape[1]*self.conv_shape[1]
             Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
             dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
@@ -153,7 +155,10 @@ class ExpModel:
         # Add model function to model
         self.model_fn = mk_model_fn
 
-        # Make a training and evaluation routine to run later
+        #----------------------------------------
+        #       TRAINING, EVAL, AND EXPORT
+        #----------------------------------------
+
         def mk_train_and_eval( data_dir, exp_dir,
                         batch_size=100,
                         train_epochs=None,
@@ -210,8 +215,8 @@ class ExpModel:
                 
                 # MNIST doesn't have labels as input so its
                 # feature spec is different
-
                 feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = [28,28,1])}
+
             # Handle non mnist data
             else:
                 # Get the train input function
@@ -220,12 +225,12 @@ class ExpModel:
                     batch_size=batch_size)
 
                 # Don't shuffle evaluation data
-                eval_input = lambda: self.input_fn('val', file_dir=[data_dir],
+                eval_input = lambda: self.input_fn('eval', file_dir=[data_dir],
                     batch_size=1,
                     shuffle=False)
                 
                 # Make the feature spec for exporting
-                feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = self.in_res),
+                feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = self.input_shape),
                                 "y":tf.placeholder(dtype = tf.int32,shape = [1])}
 
             #Train the model
@@ -241,12 +246,89 @@ class ExpModel:
             
             # Export the model
             exp_name = '/'.join([model_dir,exp_dir])
+            
+            # Add the directory to the model
+            self.exp_dir = exp_name
+
             classifier.export_savedmodel(exp_name,
                                 tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
                                 )
 
         # add the training and eval as an attribute
         self.train_and_eval = mk_train_and_eval
+
+        #----------------------------------------
+        #       PREDICTION
+        #----------------------------------------
+
+
+        def mk_prediction(data_dir, model_dir,
+                            labels_file = 'labels_key.csv',
+                            col_names = ['NAME','LABEL'],
+                            ):
+            """
+            Predict classes from raw image files. 
+            data_dir: Directory containing images to classify. (str)
+            model_dir: Directory containing model's .pd file. (str)
+            labels_file: Name of the csv file with the labels to category mapping. (str)
+            col_names: Name of the columns from the csv labels_file. 'NAME' should be actual\
+            class name. 'LABEL' is the integer label used in the model.(list)
+            """
+
+            wrk_dir = os.getcwd()
+            graph_path = '/'.join([wrk_dir,model_dir])
+            print('Graph path: %s'%(graph_path))
+
+            # Get image directory and image path names
+            images = os.listdir(data_dir)
+            images = ['/'.join([data_dir,img]) for img in images]
+
+            num_imgs = len(images)
+
+            # Make labels key for mnist
+            if self.input_fn == 'mnist':
+                labels_key = {'NAME': range(10), 'LABEL': range(10)}
+
+            else:
+                # Get the labels key
+                labels_key = pd.read_csv('labels_key.csv')
+
+                # Translate the columns
+                translate = {col_names[0]: 'NAME', col_names[1]: 'LABEL'}
+                labels_key = labels_key.rename(columns=translate)
+                
+
+            names = list(labels_key['CLASS'])
+
+            
+            # Get prediction results
+            results =predict_imgs(images,graph_path,res=self.input_shape)
+
+            # Format them to be a DataFrame
+            results = list(zip(results['names'],results['confidences'],results['inferences']))
+
+            for rix in range(len(results)):
+                name, conf, infer = results[rix]
+                # Switch inference from label to gameID
+                infer = [names[infer[0]]]
+                results[rix] = name+conf+infer
+
+            columns = ['image']
+            columns+= names
+            columns+= ['inference']
+
+            results_df = pd.DataFrame(results, columns=columns)
+            # Round the probabilities 
+            results_df[names] = results_df[names].apply(lambda x: pd.Series.round(x,4))
+
+            # Save the results
+            results_df.to_csv(args.save+'.csv')
+
+        self.predict = mk_prediction
+
+
+
+
 
     def describe(self):
             return (self.block,self.depth,self.input_shape)
