@@ -2,9 +2,11 @@ import tensorflow as tf
 from deep_models import train_eval_exp
 from deep_models import blocks
 from deep_models import predict
+import pickle
 import numpy as np
 import pandas as pd 
 import os
+import glob
 
 class ExpModel:
     def __init__(self,block,depth,input_fn,
@@ -31,10 +33,22 @@ class ExpModel:
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
 
-        # Save attributes
-        self.model_dir = model_dir  
 
-        # input_fn based on data type attribute
+        # The model directory is:
+        # block/depth/model_dir
+        save_path = '/'.join(['models',block,str(depth)+'_layer',model_dir])
+        att_path = '/'.join([save_path,'ATTRIBUTES'])
+        
+        if not os.path.isdir(save_path):
+            os.makedirs(save_path)
+            old_atr = None
+        else:
+            print('Previous model found')
+                        # The attributes are pickeled in a dictionary
+            with open(att_path,'rb') as attr_file:
+                old_atr = pickle.load(attr_file)
+            
+        # input_fn based on data type
         if block[0]=='S':
             self.stoch = True
         else:
@@ -57,7 +71,26 @@ class ExpModel:
         # First and last layer attributes
 
         self.classes = num_classes  # Number of names to categorize
+        self.model_dir = save_path          
+
         
+        # Make a dictionary to hold attribute info
+        # save this to prevent overwritting in same model_dir
+        ATTRIBUTES = {'input_fn': self.input_fn,
+                        'depth': self.depth,
+                        'activation': self.act,
+                        'block': self.block_fn,
+                        'dt': self.dt,
+                        'input_shpae': self.input_shape,
+                        'conv_shape': self.conv_shape,
+                        'classes': self.classes}
+        
+        if old_atr:
+            assert ATTRIBUTES == old_atr, "Existing model parameters do not match current model.\
+                                        Remove existing model or rename new model_dir."
+        else:
+            with open(att_path,'wb') as attr_file:
+                pickle.dump(ATTRIBUTES, attr_file)
 
         #----------------------------------------
         #       MODEL FUNCTION
@@ -156,12 +189,15 @@ class ExpModel:
 
         # Add model function to model
         self.model_fn = mk_model_fn
+        
+        # Add the directory to the model
+        self.exp_dir = '/'.join([self.model_dir,'saved_models'])
 
         #----------------------------------------
         #       TRAINING, EVAL, AND EXPORT
         #----------------------------------------
 
-        def mk_train_and_eval( data_dir, exp_dir,
+        def mk_train_and_eval( data_dir,
                         batch_size=100,
                         train_epochs=None,
                         train_steps=None,
@@ -241,18 +277,12 @@ class ExpModel:
                             )
 
             # Evaluate the model
-            eval_name = '/'.join([model_dir,input_fn,'_eval'])
+            eval_name = 'eval'
             classifier.evaluate(eval_input,
-                                steps = eval_steps,
-                                name=eval_name)
+                                steps = eval_steps)
             
             # Export the model
-            exp_name = '/'.join([model_dir,exp_dir])
-            
-            # Add the directory to the model
-            self.exp_dir = exp_name
-
-            classifier.export_savedmodel(exp_name,
+            classifier.export_savedmodel(self.exp_dir,
                                 tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
                                 )
 
@@ -280,7 +310,7 @@ class ExpModel:
             """
 
             wrk_dir = os.getcwd()
-            graph_path = '/'.join([wrk_dir,self.model_dir,save_dir])
+            graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
             print('Graph path: %s'%(graph_path))
 
             # Get image directory and image path names
@@ -296,13 +326,10 @@ class ExpModel:
             else:
                 # Get the labels key
                 labels_key = pd.read_csv(labels_file)
-                print(labels_key.head())
 
                 # Translate the columns
                 translate = {col_names[0]: 'NAME', col_names[1]: 'LABEL'}
-                print(translate)
                 labels_key = labels_key.rename(columns=translate)
-                print(labels_key.head())
                 
 
             names = list(labels_key['NAME'])
@@ -313,11 +340,10 @@ class ExpModel:
 
             # Format them to be a DataFrame
             results = list(zip(results['names'],results['confidences'],results['inferences']))
-            print('results',results)
+    
             for rix in range(len(results)):
                 name, conf, infer = results[rix]
-                # Switch inference from label to gameID
-                print(infer)
+                # Switch inference from label
                 infer = [names[infer[0]]]
                 results[rix] = name+conf+infer
 
@@ -331,12 +357,8 @@ class ExpModel:
 
             # Save the results
             results_df.to_csv(out_name+'.csv')
+            print(results_df.head())
 
-        self.predict = mk_prediction
-
-
-    def describe(self):
-            return (self.block,self.depth,self.input_shape)
-    
+        self.predict = mk_prediction    
 
     
