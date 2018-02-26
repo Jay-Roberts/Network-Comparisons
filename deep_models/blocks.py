@@ -34,7 +34,7 @@ def f_E(input_layer, dt, shape, scope):
         padding="same",
         activation=tf.nn.relu)
 
-    return tf.add( input_layer, tf.add( tf.scalar_mul(dt,fd)))
+    return tf.add( input_layer,  tf.scalar_mul(dt,fd))
 
 
 
