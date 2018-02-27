@@ -19,7 +19,7 @@ class ExpModel:
         """
         Creates a Stochastic, or not, residual network with depth-number of block type layers.
         block: Choice of block to repeat.
-                Must be from {'Stf_EM','f_E'}. (str)
+                Must be from {'van',Stf_EM','f_E'}. (str)
         depth: Number of repeats of block. (int)
         input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
         model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)

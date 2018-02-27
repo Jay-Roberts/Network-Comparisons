@@ -9,8 +9,33 @@ from __future__ import print_function
 
 import tensorflow as tf
 
+# Vanilla convolutional layer
+def van(input_layer, dt, shape, scope):
+    """
+    Basic convolutional layer used for comparison purposes.
+    dt: *NOT USED* Step size. (float)
+    shape: NSize of square kernel to use (int), umber of filters (int). (list)
+    """
 
-# Basic convolutional layer
+    size, filters = shape
+    # Compute Deterministic function
+    fdd = tf.layers.conv2d(
+        inputs=input_layer,
+        filters=filters,
+        kernel_size=size, # Make small to allow for more layers
+        padding="same",
+        activation=tf.nn.relu)
+    
+    fd = tf.layers.conv2d(
+        inputs=fdd,
+        filters=filters,
+        kernel_size=size, # Make small to allow for more layers
+        padding="same",
+        activation=tf.nn.relu)
+
+    return fd
+
+# Residual convolutional layer
 def f_E(input_layer, dt, shape, scope):
     """
     Explicit Euler block with two convolutional layers then a residual shortcut.
@@ -89,5 +114,8 @@ def Stf_EM(input_layer, dt, shape, scope):
 
 
 # Dictionary of available blocks
-BLOCKS = {'f_E':f_E,
-           'Stf_EM': Stf_EM}
+BLOCKS = {
+    'van': van,
+    'f_E':f_E,
+    'Stf_EM': Stf_EM
+        }
