@@ -33,7 +33,7 @@ def load_image(addr,res):
         # cv2 loads images as BGR, convert it to RGB
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     else:
-        img = cv2.imread(addr,-1)
+        img = cv2.imread(addr,0)
 
     img = cv2.resize(img,res[:-1])
     img.astype(np.float32)
@@ -108,6 +108,9 @@ def predict_imgs(images,graph_path,res=(28,28,3)):
         img_path = images[img_ix]
 
         img = load_image(img_path,res)
+        if len(img.shape) == 2:
+            img.shape = res
+        
         input_array[img_ix,:,:,:] = img
     
     results = predict_np(input_array,graph_path)
