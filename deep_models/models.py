@@ -69,8 +69,9 @@ class ExpModel:
         self.dt = dt    # Step size
 
         # First and last layer attributes
-
         self.classes = num_classes  # Number of names to categorize
+        
+        # Save attributes
         self.model_dir = save_path          
 
         
@@ -294,14 +295,13 @@ class ExpModel:
         #----------------------------------------
 
 
-        def mk_prediction(save_dir,
-                            data_dir='test_images',
+        def mk_prediction(  data_dir='test_images',
                             labels_file = 'labels_key.csv',
                             col_names = ['NAME','LABEL'],
                             out_name = 'predicitons'
                             ):
             """
-            Predict classes from raw image files. 
+            Predict classes from raw image files. Chooses most recent model saved in save_dir.
             save_dir: Directory containing model's .pd file. (str)
             data_dir: Directory containing images to classify. (str)
             labels_file: Name of the csv file with the labels to category mapping. (str)
@@ -309,11 +309,29 @@ class ExpModel:
             class name. 'LABEL' is the integer label used in the model.(list)
             """
 
+            # Get the model directory
             wrk_dir = os.getcwd()
-            graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
+            #graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
+            graph_path = self.exp_dir
             print('Graph path: %s'%(graph_path))
 
+            # Get most recent model
+            #
+            path_contents = os.listdir(graph_path)
+            path_contents = map(lambda loc_f: '/'.join([graph_path,loc_f]),path_contents)
+            path_contents = [dir for dir in path_contents if len(glob.glob(dir+'/*.pb'))>0]
+            
+            # Get time models were modified
+            model_times = map(lambda dir: os.path.getmtime(dir),path_contents)
+            model_times = list(model_times)
+        
+            recent_ix = model_times.index(max(model_times))
+
+            graph_path = path_contents[recent_ix]
+
+
             # Get image directory and image path names
+            #
             images = os.listdir(data_dir)
             images = ['/'.join([data_dir,img]) for img in images]
 
@@ -357,7 +375,6 @@ class ExpModel:
 
             # Save the results
             results_df.to_csv(out_name+'.csv')
-            print(results_df.head())
 
         self.predict = mk_prediction    
 

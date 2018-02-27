@@ -97,7 +97,6 @@ def predict_imgs(images,graph_path,res=(28,28,3)):
     names = [img_path.split('/')[-1] for img_path in images]
     # Get file names w/o extension
     names = [[name.split('.')[0]] for name in names]
-    print('pics: ',names)
 
     # Init input
     
