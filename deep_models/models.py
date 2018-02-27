@@ -33,10 +33,11 @@ class ExpModel:
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
 
-
         # The model directory is:
         # block/depth/model_dir
-        save_path = '/'.join(['models',block,str(depth)+'_layer',model_dir])
+        input_name = 'x'.join([str(x) for x in input_shape])
+        d_in = '_'.join([str(depth),input_name])
+        save_path = '/'.join(['models',d_in,model_dir])
         att_path = '/'.join([save_path,'ATTRIBUTES'])
         
         if not os.path.isdir(save_path):
