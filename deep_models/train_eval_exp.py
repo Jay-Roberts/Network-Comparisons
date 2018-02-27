@@ -38,7 +38,7 @@ def join_list(l):
     return result
 
 # Reads the tf.Example files
-def screen_shot_parser(serialized_example):
+def screen_shot_parser(serialized_example,resolution):
     """Parses a single tf.Example into image and label tensors."""
 
     # The tfrecord to has an image and its label
@@ -55,7 +55,7 @@ def screen_shot_parser(serialized_example):
     image = tf.cast(image, tf.float32) / 255 - 0.5
 
     # Real small now
-    image =  tf.reshape(image, [28, 28,3])
+    image =  tf.reshape(image, list(resolution))
 
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
@@ -63,7 +63,8 @@ def screen_shot_parser(serialized_example):
 
 
 # The input function
-def screen_shot_input_fn(name,file_dir = ['TFRecords'],
+def screen_shot_input_fn(name,resolution,
+                    file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
                     batch_size = 100):
@@ -99,7 +100,7 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
     # Shuffling and batching can be slow
     # get more resources
     num_slaves = mp.cpu_count()
-    dataset = dataset.map(screen_shot_parser,num_parallel_calls=num_slaves)
+    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution),num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
     dataset = dataset.prefetch(batch_size)
@@ -113,5 +114,26 @@ def screen_shot_input_fn(name,file_dir = ['TFRecords'],
 
     return features
 
+
+# Wrap up resolutions
+def screen_shot_input_fn_28x28(name,file_dir = ['TFRecords'],
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100):
+    return screen_shot_input_fn(name,(28,28,3),file_dir = file_dir,
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100)
+
+def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100):
+    return screen_shot_input_fn(name,(224,224,3),file_dir = file_dir,
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100)
+
 # Dictionary of available input functions
-INPUT_FNS= {'screen_shots':screen_shot_input_fn}
+INPUT_FNS= {'screen_shots_28':screen_shot_input_fn_28x28,
+            'screen_shots_224':screen_shot_input_fn_224x224}

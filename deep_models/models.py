@@ -45,7 +45,7 @@ class ExpModel:
             old_atr = None
         else:
             print('Previous model found')
-                        # The attributes are pickeled in a dictionary
+            # The attributes are pickeled in a dictionary
             with open(att_path,'rb') as attr_file:
                 old_atr = pickle.load(attr_file)
             
@@ -61,6 +61,7 @@ class ExpModel:
         else:
             self.input_fn = train_eval_exp.INPUT_FNS[input_fn]
             self.input_shape = input_shape
+            print('input_shape ',input_shape)
 
         # Deep layer attributes
         self.depth = depth
@@ -83,7 +84,7 @@ class ExpModel:
                         'activation': self.act,
                         'block': self.block_fn,
                         'dt': self.dt,
-                        'input_shpae': self.input_shape,
+                        'input_shape': self.input_shape,
                         'conv_shape': self.conv_shape,
                         'classes': self.classes}
         
@@ -102,6 +103,7 @@ class ExpModel:
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
+            
             input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
 
             # MNIST is fed labels directly
