@@ -21,7 +21,7 @@ def load_image(addr,res):
     Loads an image from a file as a float32 numpy array.It resizes to res and normalizes data.
     Inputs:
         addr: The file path to the image file. (str)
-        res: Desired resolution. (list)
+        res: Desired resolution including color channel. (list)
     Returns:
         Resized image as numpy array shape (res,3) with dtype np.float32 in range [-0.5,0.5]
         to fit with normalized input from training data.
@@ -35,7 +35,7 @@ def load_image(addr,res):
     else:
         img = cv2.imread(addr,0)
 
-    img = cv2.resize(img,res[:-1])
+    img = cv2.resize(img,tuple(list(res)[:-1]))
     img.astype(np.float32)
     # Normalize the values of the image from the range [0, 255] to [-0.5, 0.5]
     img = img / 255 - 0.5    
