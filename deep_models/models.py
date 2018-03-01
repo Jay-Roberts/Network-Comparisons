@@ -105,7 +105,7 @@ class ExpModel:
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
             
-            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
+            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape),name = 'input')
             
             # MNIST is fed labels directly
             # Need to pick out features for the training of other models
@@ -359,7 +359,7 @@ class ExpModel:
             
             # Get prediction results
             results =predict.predict_imgs(images,graph_path,res=self.input_shape)
-
+            print(results)
             # Format them to be a DataFrame
             results = list(zip(results['names'],results['confidences'],results['inferences']))
     
