@@ -32,7 +32,8 @@ class ExpModel:
         dt: (Optional) Step size for blocks. Default 0.1 (float)
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
-
+        if input_fn =='mnist':
+            input_shape = (28,28,1)
         # The model directory is:
         # block/depth/model_dir
         input_name = 'x'.join([str(x) for x in input_shape])
@@ -98,14 +99,14 @@ class ExpModel:
         #----------------------------------------
         #       MODEL FUNCTION
         #----------------------------------------
-
+        print('ATTRIBUTES: ', ATTRIBUTES)
         def mk_model_fn(features,labels=None,mode=None):
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
             
             input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
-
+            
             # MNIST is fed labels directly
             # Need to pick out features for the training of other models
             if not self.input_fn == 'mnist':
