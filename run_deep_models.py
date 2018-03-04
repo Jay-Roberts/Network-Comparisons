@@ -48,6 +48,13 @@ if __name__ == '__main__':
         required=True
     )
 
+    parser.add_argument(
+        '--stoch-runs',
+        help='Number of simulations to run montecarlo for stochastic models',
+        type=int,
+        default=1
+    )
+
 
     # Training arguments
     parser.add_argument(
@@ -132,6 +139,7 @@ if __name__ == '__main__':
     #Create the model
     test_screen_shot_model = models.ExpModel(args.block,args.depth,input_fn,
                                             model_dir=args.model_dir,
+                                            stoch_runs=args.stoch_runs,
                                             input_shape = input_shape,
                                             dt=args.dt,num_classes=classes)
     

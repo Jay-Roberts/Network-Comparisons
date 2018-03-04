@@ -1,16 +1,17 @@
 
-MODEL_DIR=test
+MODEL_DIR=test_loop
 BLOCK=van
 DEPTH=3
 FILE_DIR=TFRecords_28x28
 TRAIN_STEPS=2
 EVAL_STEPS=2
+STOCH_RUNS=10
 
 
 
-
-python3 run_deep_models.py \
+python run_deep_models.py \
         --model-dir $MODEL_DIR \
+	--stoch-runs $STOCH_RUNS \
         --block $BLOCK \
         --depth $DEPTH \
         --resolution 28 28 \
