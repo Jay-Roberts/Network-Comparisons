@@ -1,6 +1,6 @@
 # Run deep_models experiments
 
-from deep_models import models
+import deep_models
 import numpy as np
 import tensorflow as tf 
 import os
@@ -137,16 +137,19 @@ if __name__ == '__main__':
 
 
     #Create the model
-    test_screen_shot_model = models.ExpModel(args.block,args.depth,input_fn,
-                                            model_dir=args.model_dir,
-                                            input_shape = input_shape,
-                                            dt=args.dt,num_classes=classes)
+    test_screen_shot_model = deep_models.models.DeepModel('van',1,save_dir='dtest')
+    
+    #test_screen_shot_model = deep_models.models.ExpModel(args.block,args.depth,input_fn,
+    #                                        model_dir=args.model_dir,
+    #                                        input_shape = input_shape,
+    #                                        dt=args.dt,num_classes=classes)
+    
     
     # Train Eval and Save
-    test_screen_shot_model.train_and_eval(args.file_dir[0],
-                                        train_steps=args.train_steps,
-                                        batch_size=args.train_batch_size,
-                                        eval_steps=args.eval_steps)
+    #test_screen_shot_model.train_and_eval(args.file_dir[0],
+    ##                                    train_steps=args.train_steps,
+     #                                   batch_size=args.train_batch_size,
+     #                                   eval_steps=args.eval_steps)
     # Predict
     #test_screen_shot_model.predict(col_names=['GAMEID','LABEL'])
 

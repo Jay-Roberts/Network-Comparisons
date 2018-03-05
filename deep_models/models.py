@@ -1,12 +1,9 @@
-import tensorflow as tf
-from deep_models import train_eval_exp
-from deep_models import blocks
-from deep_models import predict
-import pickle
-import numpy as np
-import pandas as pd 
-import os
-import glob
+#import tensorflow as tf
+#import pickle
+#import numpy as np
+#import pandas as pd 
+#import os
+#import glob
 
 class ExpModel:
     def __init__(self,block,depth,input_fn,
@@ -19,7 +16,7 @@ class ExpModel:
         """
         Creates a Stochastic, or not, residual network with depth-number of block type layers.
         block: Choice of block to repeat.
-                Must be from {'van',Stf_EM','f_E'}. (str)
+                Must be from {'Stf_EM','f_E'}. (str)
         depth: Number of repeats of block. (int)
         input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
         model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)
@@ -32,13 +29,11 @@ class ExpModel:
         dt: (Optional) Step size for blocks. Default 0.1 (float)
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
-        if input_fn =='mnist':
-            input_shape = (28,28,1)
+
+
         # The model directory is:
         # block/depth/model_dir
-        input_name = 'x'.join([str(x) for x in input_shape])
-        d_in = '_'.join([str(depth),input_name])
-        save_path = '/'.join(['models',d_in,model_dir])
+        save_path = '/'.join(['models',block,str(depth)+'_layer',model_dir])
         att_path = '/'.join([save_path,'ATTRIBUTES'])
         
         if not os.path.isdir(save_path):
@@ -46,7 +41,7 @@ class ExpModel:
             old_atr = None
         else:
             print('Previous model found')
-            # The attributes are pickeled in a dictionary
+                        # The attributes are pickeled in a dictionary
             with open(att_path,'rb') as attr_file:
                 old_atr = pickle.load(attr_file)
             
@@ -62,7 +57,6 @@ class ExpModel:
         else:
             self.input_fn = train_eval_exp.INPUT_FNS[input_fn]
             self.input_shape = input_shape
-            print('input_shape ',input_shape)
 
         # Deep layer attributes
         self.depth = depth
@@ -72,9 +66,8 @@ class ExpModel:
         self.dt = dt    # Step size
 
         # First and last layer attributes
+
         self.classes = num_classes  # Number of names to categorize
-        
-        # Save attributes
         self.model_dir = save_path          
 
         
@@ -85,7 +78,7 @@ class ExpModel:
                         'activation': self.act,
                         'block': self.block_fn,
                         'dt': self.dt,
-                        'input_shape': self.input_shape,
+                        'input_shpae': self.input_shape,
                         'conv_shape': self.conv_shape,
                         'classes': self.classes}
         
@@ -99,14 +92,13 @@ class ExpModel:
         #----------------------------------------
         #       MODEL FUNCTION
         #----------------------------------------
-        print('ATTRIBUTES: ', ATTRIBUTES)
+
         def mk_model_fn(features,labels=None,mode=None):
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
-            
-            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape),name = 'input')
-            
+            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
+
             # MNIST is fed labels directly
             # Need to pick out features for the training of other models
             if not self.input_fn == 'mnist':
@@ -299,13 +291,14 @@ class ExpModel:
         #----------------------------------------
 
 
-        def mk_prediction(  data_dir='test_images',
+        def mk_prediction(save_dir,
+                            data_dir='test_images',
                             labels_file = 'labels_key.csv',
                             col_names = ['NAME','LABEL'],
                             out_name = 'predicitons'
                             ):
             """
-            Predict classes from raw image files. Chooses most recent model saved in save_dir.
+            Predict classes from raw image files. 
             save_dir: Directory containing model's .pd file. (str)
             data_dir: Directory containing images to classify. (str)
             labels_file: Name of the csv file with the labels to category mapping. (str)
@@ -313,29 +306,11 @@ class ExpModel:
             class name. 'LABEL' is the integer label used in the model.(list)
             """
 
-            # Get the model directory
             wrk_dir = os.getcwd()
-            #graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
-            graph_path = self.exp_dir
+            graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
             print('Graph path: %s'%(graph_path))
 
-            # Get most recent model
-            #
-            path_contents = os.listdir(graph_path)
-            path_contents = map(lambda loc_f: '/'.join([graph_path,loc_f]),path_contents)
-            path_contents = [dir for dir in path_contents if len(glob.glob(dir+'/*.pb'))>0]
-            
-            # Get time models were modified
-            model_times = map(lambda dir: os.path.getmtime(dir),path_contents)
-            model_times = list(model_times)
-        
-            recent_ix = model_times.index(max(model_times))
-
-            graph_path = path_contents[recent_ix]
-
-
             # Get image directory and image path names
-            #
             images = os.listdir(data_dir)
             images = ['/'.join([data_dir,img]) for img in images]
 
@@ -359,7 +334,7 @@ class ExpModel:
             
             # Get prediction results
             results =predict.predict_imgs(images,graph_path,res=self.input_shape)
-            print(results)
+
             # Format them to be a DataFrame
             results = list(zip(results['names'],results['confidences'],results['inferences']))
     
@@ -379,7 +354,29 @@ class ExpModel:
 
             # Save the results
             results_df.to_csv(out_name+'.csv')
+            print(results_df.head())
 
         self.predict = mk_prediction    
 
-    
+class DeepModel:
+
+    def __init__(self,block,depth,
+                save_dir='Deep_Models'):
+        
+        # Get basic attributes
+        self.block = block
+        self.depth = depth
+
+        # Let us know where it is saved
+        model_dir = '_'.join([block,depth])
+        save_path = '/'.join([save_dir,model_dir])
+
+        self.save_path = save_path
+        if not os.isdir(save_path):
+            print('Creating model path %s'%save_path)
+            os.path.makedirs(save_path)
+        
+    def mk_model_fn(self,model_spec):
+        self.model_fn = model_fns.model_fn(stuff)
+        
+
