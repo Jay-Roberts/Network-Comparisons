@@ -11,7 +11,6 @@ STOCH_RUNS=10
 
 python run_deep_models.py \
         --model-dir $MODEL_DIR \
-	--stoch-runs $STOCH_RUNS \
         --block $BLOCK \
         --depth $DEPTH \
         --resolution 28 28 \
