@@ -14,7 +14,7 @@ class ExpModel:
                     input_shape=(28,28,3),
                     num_classes=10,
                     conv = [5,16],
-                    dt=.1,
+                    dt=0.1,
                     activation=tf.nn.relu):
         """
         Creates a Stochastic, or not, residual network with depth-number of block type layers.
