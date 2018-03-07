@@ -154,9 +154,9 @@ if __name__ == '__main__':
                                                         activation=tf.nn.relu 
                                                         )
     
-    #test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
-    #                    train_steps=2,
-    #                    eval_steps=2)
+    test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
+                        train_steps=2,
+                        eval_steps=2)
     model_path = 'dtest/28x28x3_5/van1/traintest/1520456939'
     test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/',model_path=model_path)
 
