@@ -2,8 +2,8 @@ import tensorflow as tf
 import pickle
 #import numpy as np
 import os
-#import glob
-from blocks import blocks
+import blocks
+
 class ExpModel:
     def __init__(self,block,depth,input_fn,
                     model_dir='Models',
@@ -414,6 +414,7 @@ class DeepModel:
 
         # Make a dictionary to hold attribute info
         # save this to prevent overwritting in same model_dir
+        print(block)
         block_fn = blocks.BLOCKS[block]
         ATTRIBUTES = {  'depth': depth,
                         'activation': activation,
@@ -434,7 +435,7 @@ class DeepModel:
                 pickle.dump(ATTRIBUTES, attr_file)
         
         # Make the model function
-        from model_fns import model_fns
+        import model_fns
         self.model_fn = lambda features, labels, mode: model_fns.model_fn(self.model_specs,
                                                                         features=features,
                                                                         labels=labels,
@@ -449,96 +450,26 @@ class DeepModel:
                         eval_epochs=None,
                         eval_batch=100):
         
-        from train import train_eval_exp
+        import train_eval_exp
+        
         in_shp  = self.model_specs['input_shape']
-        train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,exp_dir,
+        export_dir = '/'.join([self.model_dir,exp_dir])
+        self.exp_dir = export_dir
+
+        train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
                         train_steps=train_steps,
                         train_batch=train_batch,
                         train_epochs=train_epochs,
                         eval_steps=eval_steps,
                         eval_batch=eval_batch,
                         eval_epochs=eval_epochs)
+    
+    
 
 
                 
 
     
-
-class DeepModel1:
-
-    def __init__(self,input_shape=(28,28,3),
-                num_classes=5,
-                block = 'van',
-                depth = 1,
-                save_dir='Deep_Models'):
-        
-        
-        # Make data specs dictionary
-        DATA_SPEC = {  'input_shape': input_shape,
-                        'num_classes': num_classes
-                    }
-        self.data_spec = DATA_SPEC
-
-
-        # Let us know where it is saved
-        input_dir = 'x'.join([str(x) for x in input_shape])
-        classes_dir = input_dir+'_'+str(num_classes)+'Classes'
-        save_path = '/'.join([save_dir,classes_dir])
-
-        # Where to save model specs
-        self.spec_path = '/'.join([save_path,'model_spec.P'])
-        self.save_path = save_path
-
-        # Check if the save dir exists
-        if not os.path.isdir(self.save_path):
-            print('Creating model path %s'%self.save_path)
-            os.makedirs(self.save_path)
-            old_atr = None
-
-        # Check is save dir has old model spec    
-        elif os.path.isfile(self.spec_path):
-            print('Previous model found')
-            # The attributes are pickeled in a dictionary
-            with open(self.spec_path,'rb') as attr_file:
-                old_atr = pickle.load(attr_file)
-        
-        if old_atr:
-            assert self.data_spec == old_atr, "Existing model parameters do not match current model.\
-                                        Remove existing model or rename new model_dir."
-        else:
-            with open(self.spec_path,'wb') as attr_file:
-                pickle.dump(self.data_spec, attr_file)
-
-        
-
-
-        
-    def mk_model_fn(self,exp_param):
-        """
-        exp_param: Dictionary with keys
-            {'block', 'depth', 'conv_spec','dt','activation','learning rate'}
-        """
-        # Make a dir for this model
-
-        model_dir = exp_param['block']+str(exp_param['depth'])
-        model_path = '/'.join([self.save_path,model_dir])
-        if not os.path.isdir(model_path):
-            print('Making model path %s'%model_path)
-            os.mkdir(model_path)
-        
-        exp_param.update(self.data_spec)
-        
-        self.model_fn =lambda features, labels, mode: model_fns.model_fn(exp_spec,features=features,labels=labels,mode=mode)
-        self.data_spec.update(exp_param)
-        
-    
-    def train_and_eval(self,train_param,eval_param):
-        """
-        train_param: Dictionary with keys 
-            {'batch_size', 'max_steps','epochs'}
-        eval_param: Dictionary with keys
-            {'batch_size', 'max_steps', 'epochs', 'exp_dir'}
-        """
 
 
 

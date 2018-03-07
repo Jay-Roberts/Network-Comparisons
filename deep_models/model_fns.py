@@ -1,6 +1,6 @@
 
 import tensorflow as tf 
-from blocks import blocks
+
 def model_fn(exp_spec,features=None,labels=None,mode=None):
     """block, depth = 1,
                              input_shape = (28,28,3),
@@ -19,11 +19,10 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         ]
     inputs = [exp_spec.get(key) for key in keys]
 
-    block, depth, input_shape = inputs[:3]
-    num_classes, conv_spec,dt = inputs[3:6]
-    activation,learning_rate = inputs[6:]
+    block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
+    num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
+    activation,learning_rate = exp_spec['activation'], exp_spec['learning_rate']
     
-    print('MODE:',mode)
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
     input_layer = tf.reshape(features["x"], [-1]+list(input_shape))
@@ -48,7 +47,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     # Deep portion
     # Step size - set for stability
     h = dt
-    block_fn = blocks.BLOCKS[block]
+    block_fn = block
     Deep = tf.contrib.layers.repeat(conv0,
                                         depth,
                                         block_fn, 
@@ -61,8 +60,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
-    dropout = tf.layers.dropout(
-        inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
+    dropout = tf.layers.dropout( inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
     last = dropout
     # Logits Layer
     # Units is number of games

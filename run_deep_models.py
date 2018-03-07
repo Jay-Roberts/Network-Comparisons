@@ -1,11 +1,12 @@
 # Run deep_models experiments
 
-import deep_models
+from deep_models import models
 import numpy as np
 import tensorflow as tf 
 import os
 import parser
 import argparse
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Input Arguments
@@ -138,13 +139,13 @@ if __name__ == '__main__':
 
     # Create the class
     # Set model parameters
-    model_param = {'block':'van',
+    model_param = {'block':'f_E',
                 'depth':1,
                 'dt':0.1,
                 'conv_spec':[5,16],
                 'learning_rate':0.01,
                 'activation':tf.nn.relu}
-    test_screen_shot_model = deep_models.models.DeepModel('van',1, 
+    test_screen_shot_model = models.DeepModel('van',1, 
                                                         input_shape = (28,28,3),
                                                         conv_spec = [5,16],
                                                         num_classes=5,
