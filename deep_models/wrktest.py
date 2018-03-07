@@ -1,11 +1,19 @@
-import tensorflow as tf 
-#import numpy as np 
-from blocks import blocks
+import glob 
+import os
+import csv
 
-def f_1(x):
-    return x
-def f_2(x,y):
-    return x+y
+d = {'a':[1,2],'b':[3,4]}
+with open('testwrite.csv','wb') as outfile:
+    fieldnames = d.keys()
+    writer = csv.writer(outfile)
+    writer.writerow(d.keys())
 
-d = {(1,1):f_1}
-print(d[(1,1)].__name__)
+    # Assumes each key has same number of elements
+    
+    sample = d['a']
+    n_rows = len(sample)
+    for i in range(n_rows):
+        a,b = d['a'][i],d['b'][i]
+        writer.writerow([a,b])
+    
+
