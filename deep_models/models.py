@@ -1,6 +1,6 @@
 import tensorflow as tf
+import csv
 import pickle
-#import numpy as np
 import os
 import blocks
 
@@ -366,7 +366,8 @@ class DeepModel:
                     conv_spec = [5,16],
                     dt=.1,
                     learning_rate=.001,
-                    activation=tf.nn.relu):
+                    activation=tf.nn.relu,
+                    mnist=False):
         """
         Creates a Stochastic, or not, residual network with depth-number of block type layers.
         block: Choice of block to repeat.
@@ -384,13 +385,14 @@ class DeepModel:
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
 
-
+        self.mnsit = mnist
         # The model directory is:
         # block/depth/model_dir
         input_shape_path = 'x'.join([str(n) for n in input_shape])
         data_path = '_'.join([input_shape_path,str(num_classes)])
         save_path = '/'.join([model_dir,data_path, block+str(depth)])
         self.model_dir = save_path
+        self.exp_dir = save_path
 
         att_path = '/'.join([save_path,'ATTRIBUTES.P'])
         
@@ -423,7 +425,8 @@ class DeepModel:
                         'input_shape': input_shape,
                         'conv_spec': conv_spec,
                         'classes': num_classes,
-                        'learning_rate': learning_rate}
+                        'learning_rate': learning_rate
+                        }
         
         self.model_specs = ATTRIBUTES
         
@@ -454,6 +457,8 @@ class DeepModel:
         
         in_shp  = self.model_specs['input_shape']
         export_dir = '/'.join([self.model_dir,exp_dir])
+        
+        # Update export directory for training
         self.exp_dir = export_dir
 
         train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
@@ -464,16 +469,44 @@ class DeepModel:
                         eval_batch=eval_batch,
                         eval_epochs=eval_epochs)
     
-    
+    def predict(self,images_dir,model_path=None,
+            labels_key='labels_key.csv',
+            out_name='predictions'):
 
+        # Get pb dir
+        if model_path:
+            save_dir = model_path
+            print('SAVE DIR: ', save_dir)
+        else:
+            # Find most recent
+            old_models = os.listdir(self.exp_dir)
+            old_models = [self.exp_dir + '/'+x for x in old_models]
 
+            mod_times = [os.path.getmtime(x) for x in old_models]
+            most_recent_ix = mod_times.index( max(mod_times))
+
+            save_dir = old_models[most_recent_ix]
+
+        # Make labels key for mnist
+        if self.mnsit:
+            labels_dict = {'NAME': range(10), 'LABEL': range(10)}
+        
+        else:
+            with open(labels_key,mode='rb') as csvfile:
+                reader = csv.reader(csvfile)
                 
+                # Skip past header
+                reader.next()
+                labels_dict = {'NAME':[],'LABEL':[]}
 
-    
-
-
-
-
+                for row in reader:
+                    name, label = row
+                    labels_dict['NAME'].append(name)
+                    labels_dict['LABEL'].append(label)
         
-        
+        res = self.model_specs['input_shape']
+
+        from predict import mk_prediction
+        mk_prediction(save_dir,labels_dict, res,data_dir=images_dir,out_name =out_name)
+
 

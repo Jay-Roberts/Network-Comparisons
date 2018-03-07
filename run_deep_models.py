@@ -154,23 +154,10 @@ if __name__ == '__main__':
                                                         activation=tf.nn.relu 
                                                         )
     
-    test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
-                        train_steps=2,
-                        eval_steps=2)
-    
-    
-    #test_screen_shot_model = deep_models.models.ExpModel(args.block,args.depth,input_fn,
-    #                                        model_dir=args.model_dir,
-    #                                        input_shape = input_shape,
-    #                                        dt=args.dt,num_classes=classes)
-    
-    
-    # Train Eval and Save
-    #test_screen_shot_model.train_and_eval(args.file_dir[0],
-    ##                                    train_steps=args.train_steps,
-     #                                   batch_size=args.train_batch_size,
-     #                                   eval_steps=args.eval_steps)
-    # Predict
-    #test_screen_shot_model.predict(col_names=['GAMEID','LABEL'])
+    #test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
+    #                    train_steps=2,
+    #                    eval_steps=2)
+    model_path = 'dtest/28x28x3_5/van1/traintest/1520456939'
+    test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/',model_path=model_path)
 
 
