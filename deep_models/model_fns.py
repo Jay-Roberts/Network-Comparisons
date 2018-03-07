@@ -2,10 +2,20 @@
 import tensorflow as tf 
 
 def model_fn(exp_spec,features=None,labels=None,mode=None):
-    """block, depth = 1,
-                             input_shape = (28,28,3),
-                             num_classes = 10,
-                             conv_spec = [5,16],"""
+    """
+    Creates a model function according to experiment specifications exp_spec.
+    Inputs:
+        exp_spec: Model specifications as dictionary.
+        {   'depth': depth of model (int),
+            'activation': activation function (function),
+            'block': block function (function),
+            'dt': step size for deep layer (float),
+            'input_shape': input_shape (tuple),
+            'conv_spec': [filter size, number of filters] (list),
+            'classes': number of classes (int),
+            'learning_rate': learning rate for training (float)
+                        }
+    """
     
     keys = [
         'block',

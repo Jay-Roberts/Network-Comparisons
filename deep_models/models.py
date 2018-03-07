@@ -48,22 +48,27 @@ class DeepModel:
         """
 
         self.mnsit = mnist
-        # The model directory is:
-        # block/depth/model_dir
+        
+        # Saved in model_dir/resolution_classes/block depth
         input_shape_path = 'x'.join([str(n) for n in input_shape])
+
         data_path = '_'.join([input_shape_path,str(num_classes)])
         save_path = '/'.join([model_dir,data_path, block+str(depth)])
+
+        # Attribute to model for later
         self.model_dir = save_path
         self.exp_dir = save_path
 
+        # Save path for attributes dicitionary
         att_path = '/'.join([save_path,'ATTRIBUTES.P'])
         
         if not os.path.isdir(save_path):
             os.makedirs(save_path)
             old_atr = None
+
         elif os.path.isfile(att_path):
-            print('Previous model found')
-                        # The attributes are pickeled in a dictionary
+            # The attributes are pickeled in a dictionary
+
             with open(att_path,'rb') as attr_file:
                 old_atr = pickle.load(attr_file)
         else:
@@ -92,6 +97,7 @@ class DeepModel:
         
         self.model_specs = ATTRIBUTES
         
+        # Check for old model compatability
         if old_atr:
             assert ATTRIBUTES == old_atr, "Existing model parameters do not match current model.\
                                         Remove existing model or rename new model_dir."
@@ -100,8 +106,8 @@ class DeepModel:
                 pickle.dump(ATTRIBUTES, attr_file)
         
         # Make the model function
-        import model_fns
-        self.model_fn = lambda features, labels, mode: model_fns.model_fn(self.model_specs,
+        from model_fns import model_fn
+        self.model_fn = lambda features, labels, mode: model_fn(self.model_specs,
                                                                         features=features,
                                                                         labels=labels,
                                                                         mode=mode)
@@ -114,8 +120,26 @@ class DeepModel:
                         eval_steps=None,
                         eval_epochs=None,
                         eval_batch=100):
+        """
+        Train, evaluate, and export a saved model. For training and eval either steps or epochs \
+        must be set or mode will run forever.
+        Inputs:
+            data_dir: Where the data is stored. Must be accessible by input_fn. 
+                        For mnist set to None. (str)
+            model_fn: The model function to use to construct estimator.
+            input_shape: Image resolution to use in model. (tuple)
+            exp_dir: Directory to export checkpoints and saved model. (str)
+            train_steps: Number of steps to train for. If None train_epochs must be. (int)
+            train_epochs: Number of epochs to run through training data. If None train_steps must be. (int)
+            train_batch: Batch size to use for training. Default 100. (int)
+            eval_steps: Number of steps to eval for. If None eval_epochs must be. (int)
+            eval_epochs: Number of epochs to run through evaling data. If None eval_steps must be. (int)
+            eval_batch: Batch size to use for evaling. Default 100. (int)
+        Returns:
+            None
         
-        import train_eval_exp
+        """
+        
         
         in_shp  = self.model_specs['input_shape']
         export_dir = '/'.join([self.model_dir,exp_dir])
@@ -123,7 +147,8 @@ class DeepModel:
         # Update export directory for training
         self.exp_dir = export_dir
 
-        train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
+        from train_eval_exp import train_and_eval
+        train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
                         train_steps=train_steps,
                         train_batch=train_batch,
                         train_epochs=train_epochs,
@@ -134,6 +159,19 @@ class DeepModel:
     def predict(self,images_dir,model_path=None,
             labels_key='labels_key.csv',
             out_name='predictions'):
+        """
+        Predict classes from raw image files. 
+        Inputs:
+            save_dir: Relative directory containing model's .pd file. (str)
+            labels_dict: Dictionary of model labels to actual classes. (dict)
+            res: Resolution of input to model. (tuple)
+            data_dir: Relative directory containing images to classify. 
+                Default is 'test_images'. (str)
+            out_name: Name of csv containing predictions. 
+                Default is 'predictions'. (str)
+        Returns:
+            Creates out_name.csv with predictions from the model of testimages.
+        """
 
         # Get pb dir
         if model_path:
