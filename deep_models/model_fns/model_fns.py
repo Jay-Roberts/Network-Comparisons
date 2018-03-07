@@ -1,13 +1,27 @@
 
-
-def model_fn(features,labels=None,labels=None,mode=None,model_spec):
+import tensorflow as tf 
+from blocks import blocks
+def model_fn(exp_spec,features=None,labels=None,mode=None):
     """block, depth = 1,
                              input_shape = (28,28,3),
                              num_classes = 10,
                              conv_spec = [5,16],"""
     
-    keys = ['block','depth','input_shape','num_classes','conv_spec','dt','activation',]
-    block, depth, input_shape, num_classes, conv_spec,dt,activation = [model_spec.get(key) for key in keys]
+    keys = [
+        'block',
+        'depth',
+        'input_shape',
+        'num_classes',
+        'conv_spec',
+        'dt',
+        'activation',
+        'learning_rate'
+        ]
+    inputs = [exp_spec.get(key) for key in keys]
+
+    block, depth, input_shape = inputs[:3]
+    num_classes, conv_spec,dt = inputs[3:6]
+    activation,learning_rate = inputs[6:]
     
     print('MODE:',mode)
     # Input Layer
@@ -16,7 +30,7 @@ def model_fn(features,labels=None,labels=None,mode=None,model_spec):
 
     # MNIST is fed labels directly
     # Need to pick out features for the training of other models
-    if not input_fn == 'mnist':
+    if not input_shape == 'mnist':
         labels = features["y"]
         
     
@@ -34,7 +48,7 @@ def model_fn(features,labels=None,labels=None,mode=None,model_spec):
     # Deep portion
     # Step size - set for stability
     h = dt
-
+    block_fn = blocks.BLOCKS[block]
     Deep = tf.contrib.layers.repeat(conv0,
                                         depth,
                                         block_fn, 
@@ -79,7 +93,7 @@ def model_fn(features,labels=None,labels=None,mode=None,model_spec):
     # Configure the Training Op (for TRAIN mode)
     if mode == tf.estimator.ModeKeys.TRAIN:
         print('Training')
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=0.001)
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())

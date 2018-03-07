@@ -1,10 +1,9 @@
-#import tensorflow as tf
-#import pickle
+import tensorflow as tf
+import pickle
 #import numpy as np
-#import pandas as pd 
-#import os
+import os
 #import glob
-
+from blocks import blocks
 class ExpModel:
     def __init__(self,block,depth,input_fn,
                     model_dir='Models',
@@ -358,25 +357,192 @@ class ExpModel:
 
         self.predict = mk_prediction    
 
-class DeepModel:
 
+class DeepModel:
     def __init__(self,block,depth,
+                    model_dir='dtest',
+                    input_shape=(28,28,3),
+                    num_classes=10,
+                    conv_spec = [5,16],
+                    dt=.1,
+                    learning_rate=.001,
+                    activation=tf.nn.relu):
+        """
+        Creates a Stochastic, or not, residual network with depth-number of block type layers.
+        block: Choice of block to repeat.
+                Must be from {'Stf_EM','f_E'}. (str)
+        depth: Number of repeats of block. (int)
+        input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
+        model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)
+        color: (Optional) Whether data has color channel. Default False (bool)
+        classes: (Optional) Number of classes the data has. Default 10. (int)
+        input_shape: (Optional) Resolution of input image. Default (28,28). (tup)
+        filters: (Optional) Number of filters for initial convolution. Default 16 (int)
+        activation: (Optional) Activation function of initial and final layer of network. 
+                    Default is relu. (function)
+        dt: (Optional) Step size for blocks. Default 0.1 (float)
+        conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
+        """
+
+
+        # The model directory is:
+        # block/depth/model_dir
+        input_shape_path = 'x'.join([str(n) for n in input_shape])
+        data_path = '_'.join([input_shape_path,str(num_classes)])
+        save_path = '/'.join([model_dir,data_path, block+str(depth)])
+        self.model_dir = save_path
+
+        att_path = '/'.join([save_path,'ATTRIBUTES.P'])
+        
+        if not os.path.isdir(save_path):
+            os.makedirs(save_path)
+            old_atr = None
+        elif os.path.isfile(att_path):
+            print('Previous model found')
+                        # The attributes are pickeled in a dictionary
+            with open(att_path,'rb') as attr_file:
+                old_atr = pickle.load(attr_file)
+        else:
+            old_atr = None
+        
+        # input_fn based on data type
+        if block[0]=='S':
+            self.stoch = True
+        else:
+            self.stoch = False
+        
+
+        # Make a dictionary to hold attribute info
+        # save this to prevent overwritting in same model_dir
+        block_fn = blocks.BLOCKS[block]
+        ATTRIBUTES = {  'depth': depth,
+                        'activation': activation,
+                        'block': block_fn,
+                        'dt': dt,
+                        'input_shape': input_shape,
+                        'conv_spec': conv_spec,
+                        'classes': num_classes,
+                        'learning_rate': learning_rate}
+        
+        self.model_specs = ATTRIBUTES
+        
+        if old_atr:
+            assert ATTRIBUTES == old_atr, "Existing model parameters do not match current model.\
+                                        Remove existing model or rename new model_dir."
+        else:
+            with open(att_path,'wb') as attr_file:
+                pickle.dump(ATTRIBUTES, attr_file)
+        
+        # Make the model function
+        from model_fns import model_fns
+        self.model_fn = lambda features, labels, mode: model_fns.model_fn(self.model_specs,
+                                                                        features=features,
+                                                                        labels=labels,
+                                                                        mode=mode)
+    
+    # Define the training and evaluation routine
+    def train_and_eval(self,data_dir,exp_dir,
+                        train_steps=None,
+                        train_epochs=None,
+                        train_batch=100,
+                        eval_steps=None,
+                        eval_epochs=None,
+                        eval_batch=100):
+        
+        from train import train_eval_exp
+        in_shp  = self.model_specs['input_shape']
+        train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,exp_dir,
+                        train_steps=train_steps,
+                        train_batch=train_batch,
+                        train_epochs=train_epochs,
+                        eval_steps=eval_steps,
+                        eval_batch=eval_batch,
+                        eval_epochs=eval_epochs)
+
+
+                
+
+    
+
+class DeepModel1:
+
+    def __init__(self,input_shape=(28,28,3),
+                num_classes=5,
+                block = 'van',
+                depth = 1,
                 save_dir='Deep_Models'):
         
-        # Get basic attributes
-        self.block = block
-        self.depth = depth
+        
+        # Make data specs dictionary
+        DATA_SPEC = {  'input_shape': input_shape,
+                        'num_classes': num_classes
+                    }
+        self.data_spec = DATA_SPEC
+
 
         # Let us know where it is saved
-        model_dir = '_'.join([block,depth])
-        save_path = '/'.join([save_dir,model_dir])
+        input_dir = 'x'.join([str(x) for x in input_shape])
+        classes_dir = input_dir+'_'+str(num_classes)+'Classes'
+        save_path = '/'.join([save_dir,classes_dir])
 
+        # Where to save model specs
+        self.spec_path = '/'.join([save_path,'model_spec.P'])
         self.save_path = save_path
-        if not os.isdir(save_path):
-            print('Creating model path %s'%save_path)
-            os.path.makedirs(save_path)
+
+        # Check if the save dir exists
+        if not os.path.isdir(self.save_path):
+            print('Creating model path %s'%self.save_path)
+            os.makedirs(self.save_path)
+            old_atr = None
+
+        # Check is save dir has old model spec    
+        elif os.path.isfile(self.spec_path):
+            print('Previous model found')
+            # The attributes are pickeled in a dictionary
+            with open(self.spec_path,'rb') as attr_file:
+                old_atr = pickle.load(attr_file)
         
-    def mk_model_fn(self,model_spec):
-        self.model_fn = model_fns.model_fn(stuff)
+        if old_atr:
+            assert self.data_spec == old_atr, "Existing model parameters do not match current model.\
+                                        Remove existing model or rename new model_dir."
+        else:
+            with open(self.spec_path,'wb') as attr_file:
+                pickle.dump(self.data_spec, attr_file)
+
+        
+
+
+        
+    def mk_model_fn(self,exp_param):
+        """
+        exp_param: Dictionary with keys
+            {'block', 'depth', 'conv_spec','dt','activation','learning rate'}
+        """
+        # Make a dir for this model
+
+        model_dir = exp_param['block']+str(exp_param['depth'])
+        model_path = '/'.join([self.save_path,model_dir])
+        if not os.path.isdir(model_path):
+            print('Making model path %s'%model_path)
+            os.mkdir(model_path)
+        
+        exp_param.update(self.data_spec)
+        
+        self.model_fn =lambda features, labels, mode: model_fns.model_fn(exp_spec,features=features,labels=labels,mode=mode)
+        self.data_spec.update(exp_param)
+        
+    
+    def train_and_eval(self,train_param,eval_param):
+        """
+        train_param: Dictionary with keys 
+            {'batch_size', 'max_steps','epochs'}
+        eval_param: Dictionary with keys
+            {'batch_size', 'max_steps', 'epochs', 'exp_dir'}
+        """
+
+
+
+
+        
         
 

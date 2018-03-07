@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    print(args)
+    #print(args)
     # Set python level verbosity
     tf.logging.set_verbosity(args.verbosity)
     # Set C++ Graph Execution level verbosity
@@ -136,8 +136,27 @@ if __name__ == '__main__':
     classes = len(os.listdir(args.file_dir[0]))
 
 
-    #Create the model
-    test_screen_shot_model = deep_models.models.DeepModel('van',1,save_dir='dtest')
+    # Create the class
+    # Set model parameters
+    model_param = {'block':'van',
+                'depth':1,
+                'dt':0.1,
+                'conv_spec':[5,16],
+                'learning_rate':0.01,
+                'activation':tf.nn.relu}
+    test_screen_shot_model = deep_models.models.DeepModel('van',1, 
+                                                        input_shape = (28,28,3),
+                                                        conv_spec = [5,16],
+                                                        num_classes=5,
+                                                        dt=0.01,
+                                                        learning_rate=.001,
+                                                        activation=tf.nn.relu 
+                                                        )
+    
+    test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
+                        train_steps=2,
+                        eval_steps=2)
+    
     
     #test_screen_shot_model = deep_models.models.ExpModel(args.block,args.depth,input_fn,
     #                                        model_dir=args.model_dir,
