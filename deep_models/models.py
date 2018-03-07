@@ -6,7 +6,7 @@ from deep_models import blocks
 
 class DeepModel:
     def __init__(self,block,depth,
-                    model_dir='dtest',
+                    model_dir='d_models',
                     input_shape=(28,28,3),
                     num_classes=10,
                     conv_spec = [5,16],
@@ -15,20 +15,36 @@ class DeepModel:
                     activation=tf.nn.relu,
                     mnist=False):
         """
-        Creates a Stochastic, or not, residual network with depth-number of block type layers.
-        block: Choice of block to repeat.
-                Must be from {'Stf_EM','f_E'}. (str)
-        depth: Number of repeats of block. (int)
-        input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
-        model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)
-        color: (Optional) Whether data has color channel. Default False (bool)
-        classes: (Optional) Number of classes the data has. Default 10. (int)
-        input_shape: (Optional) Resolution of input image. Default (28,28). (tup)
-        filters: (Optional) Number of filters for initial convolution. Default 16 (int)
-        activation: (Optional) Activation function of initial and final layer of network. 
-                    Default is relu. (function)
-        dt: (Optional) Step size for blocks. Default 0.1 (float)
-        conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
+        Class to create, train, evaluate, save, and make inferences from deep network models.
+        Inputs:
+            block: Choice of block to repeat.
+                    Must be from {'Stf_EM','f_E'}. (str)
+            depth: Number of repeats of block. (int)
+            model_dir: (Optional) Directory to store model outputs. 
+                Default 'd_models' (str)
+            input_shape: (Optional) Resolution of input image. 
+                Default (28,28). (tup)
+            num_classes: (Optional) Number of classes the data has. 
+                Default 10. (int)
+            conv_spec: Size of square kernel to use (int), Number of filters (int). 
+                Default [5,16] (list)
+            dt: (Optional) Step size for blocks. 
+                Default 0.1 (float)
+            learning_rate: (Optional) The learning rate for gradient decent during training.
+                Deault .001 (float)
+            activation: (Optional) Activation function of initial and final layer of network. 
+                Default is relu. (function)
+            mnist: (Optional) Whether to load data from mnist or not. 
+                Default is False. (bool)        
+        Returns: DeepModel class with the following attributes
+            
+            exp_dir: Base directory for exporting .pb files (str)
+            mnist: Whether to load data from mnist or not. (bool)
+            model_dir: Base directory to save model files. (str)
+            model_spec: Wraps up inputs of __init__ into dictionary. (dict)
+
+            model_fn: the model function that defines the computational graph for tf.Estimator.
+                   
         """
 
         self.mnsit = mnist
