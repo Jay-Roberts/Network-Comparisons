@@ -13,7 +13,6 @@ import glob
 import os
 import tensorflow as tf
 import multiprocessing as mp
-
 #-----------------------------------------------
 #           Input Functions
 #-----------------------------------------------
@@ -22,7 +21,10 @@ import multiprocessing as mp
 def get_name(tag):
     """
     Get the tfrecords from the file_dir. Files are saved as file_dir/game/name_x.tfrecords
-    tag: (game,name,file_dir) from screen_shot_input_fn. 
+    Inputs:
+        tag: (game,name,file_dir) from screen_shot_input_fn. (str,str,str)
+    Retruns:
+        List of tfrecord files matching the game and name.
     """
     game,name,file_dir = tag
     path = '/'.join([file_dir,game,name])
@@ -32,6 +34,9 @@ def get_name(tag):
 
 # joins lists of lists
 def join_list(l):
+    """
+    Joins lists.
+    """
     result = []
     for x in l:
         result+=x
@@ -39,7 +44,14 @@ def join_list(l):
 
 # Reads the tf.Example files
 def screen_shot_parser(serialized_example,resolution):
-    """Parses a single tf.Example into image and label tensors."""
+    """Parses a single tf.Example into image and label tensors.
+    Inputs:
+        serialized_example: A tfrecord with features "image" and "label". (tfrecord)
+        resoltuion: tuple resolution of image. (tuple)
+    Returns:
+        Dictionary with keys "x" and "y" for the image as a normalized tf.Tensor 
+            and the label as tf.int32 respectively.
+    """
 
     # The tfrecord to has an image and its label
     features = tf.parse_single_example(
@@ -70,12 +82,12 @@ def screen_shot_input_fn(name,resolution,
                     batch_size = 100):
     """
     The input function for training, testing, and evaluation.
-    
-    file_dir: Directory where the tfrecords are stored. Default is ['TFRecords']. (list)
-    name: What mode is the model in. Must be from {'train','test','eval'}. (str)
-    num_epochs: Number of epochs. (int)
-    shuffle: Whether to shuffle input. Default True. (bool)
-    batch_size: Batch size of input. Also the buffer size. Default 100. (int)
+    Inputs:
+        file_dir: Directory where the tfrecords are stored. Default is ['TFRecords']. (list)
+        name: What mode is the model in. Must be from {'train','test','eval'}. (str)
+        num_epochs: Number of repeats for dataset. (int)
+        shuffle: Whether to shuffle input. Default True. (bool)
+        batch_size: Batch size of input. Also the buffer size. Default 100. (int)
     """
     # Get games
     file_dir = file_dir[0]
@@ -141,13 +153,6 @@ INPUT_FNS= {(28,28,3):screen_shot_input_fn_28x28,
 
 # Training routines
 
-#def train_and_eval( data_dir,model_fn,model_dir,input_shape,
-#                        exp_dir,
-#                        batch_size=100,
-#                        train_epochs=None,
-#                        max_train_steps=None,
-#                        max_eval_steps=None,
-#                        eval_epochs=None):
 def train_and_eval( data_dir,model_fn,model_dir,input_shape,
                         exp_dir,
                         train_steps=None,
@@ -158,17 +163,22 @@ def train_and_eval( data_dir,model_fn,model_dir,input_shape,
                         eval_batch=100
                         ):
     """
-    Parameters:
-        Train and evaluate the model using Estimators. Eval batch size is set to 1.
+    Train, evaluate, and export a saved model. For training and eval either steps or epochs \
+    must be set or mode will run forever.
+    Inputs:
         data_dir: Where the data is stored. Must be accessible by input_fn. 
                     For mnist set to None. (str)
+        model_fn: The model function to use to construct estimator.
+        input_shape: Image resolution to use in model. (tuple)
         exp_dir: Directory to export checkpoints and saved model. (str)
-        batch_size: Training batch size. Default 100. (int)
-        train_epochs: Number of epochs to train for. If None must set train_steps.
-                    Default None. (int)
-        train_steps: Max number of training steps. If none will run until out of inputs.
-                    Default None (int)
-        eval_epochs: Number of evaluation epochs. Default None (int)
+        train_steps: Number of steps to train for. If None train_epochs must be. (int)
+        train_epochs: Number of epochs to run through training data. If None train_steps must be. (int)
+        train_batch: Batch size to use for training. Default 100. (int)
+        eval_steps: Number of steps to eval for. If None eval_epochs must be. (int)
+        eval_epochs: Number of epochs to run through evaling data. If None eval_steps must be. (int)
+        eval_batch: Batch size to use for evaling. Default 100. (int)
+    Returns:
+        None
     
     """
     # Get input function

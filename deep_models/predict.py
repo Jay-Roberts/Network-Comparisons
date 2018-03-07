@@ -9,10 +9,8 @@ from __future__ import print_function
 
 
 import numpy as np
-import glob
 import os
 import tensorflow as tf
-import multiprocessing as mp
 import cv2
 import csv
 
@@ -49,8 +47,8 @@ def predict_np(images,graph_path):
     Takes a numpy image and uses the model from graph_path to predict what label it is. Returns a
     dictionary of infered games and the confidence probabilities.
     Inputs:
-        images: (list), list of numpy array to be classified. Must fit the resolution for the graph.
-        graph_path: (str), relative path to the trained model .pb file.
+        images: Numpy arrays to be classified. Must fit the resolution for the graph. (list)
+        graph_path: relative path to the trained model .pb file. (str)
     Returns:
         Dict with keys {inferences,confidences}.
             inferences: int, The softmax guess corresponding to the inferred label for the image.
@@ -86,14 +84,14 @@ def predict_imgs(images,graph_path,res=(28,28,3)):
     """
     Takes list of img file names and returns dictionary of infrered label and confidence probabilites.
     Inputs:
-        images: list, file names of image as str.
-        graph_path: str, directory contaning the saved .pb model file.
-        res: tuple, resolution of image required for the model to predict.
+        images: File names of image as str. (list)
+        graph_path: Relative directory contaning the saved .pb model file. (str)
+        res: Resolution of image required for the model to predict. (tuple)
     Returns:
         Dict with keys {names,inferences,confidences}.
-            names: str, name of file wihtout directory tree or file extension. 
-            inferences: int, The softmax guess corresponding to the inferred label for the image.
-            confidences: A list where each element is a list with the probability the image corresponds to a given label.    
+            names: Name of file wihtout directory tree or file extension. (str)
+            inferences: The softmax guess corresponding to the inferred label for the image. (int)
+            confidences: Probabilities the image corresponds to a given label. (list)
     """
 
     num_imgs = len(images)
@@ -129,16 +127,22 @@ def mk_prediction(save_dir,labels_dict,res,
                     ):
     """
     Predict classes from raw image files. 
-    save_dir: Directory containing model's .pd file. (str)
-    data_dir: Directory containing images to classify. (str)
-    labels_file: Name of the csv file with the labels to category mapping. (str)
-    col_names: Name of the columns from the csv labels_file. 'NAME' should be actual\
-    class name. 'LABEL' is the integer label used in the model.(list)
+    Inputs:
+        save_dir: Relative directory containing model's .pd file. (str)
+        labels_dict: Dictionary of model labels to actual classes. (dict)
+        res: Resolution of input to model. (tuple)
+        data_dir: Relative directory containing images to classify. 
+            Default is 'test_images'. (str)
+        out_name: Name of csv containing predictions. 
+            Default is 'predictions'. (str)
+    Returns:
+        Creates out_name.csv with predictions from the model of testimages.
     """
 
     labels_key = labels_dict
-    wrk_dir = os.getcwd()
-    graph_path = '/'.join([wrk_dir,save_dir])
+    #wrk_dir = os.getcwd()
+    #graph_path = '/'.join([wrk_dir,save_dir])
+    graph_path = save_dir
     print('Graph path: %s'%(graph_path))
 
     # Get image directory and image path names

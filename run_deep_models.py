@@ -157,7 +157,7 @@ if __name__ == '__main__':
     test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
                         train_steps=2,
                         eval_steps=2)
-    model_path = 'dtest/28x28x3_5/van1/traintest/1520456939'
+    model_path = '/home/jay/Network-Comparisons/dtest/28x28x3_5/van1/traintest/1520458227'
     test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/',model_path=model_path)
 
 
