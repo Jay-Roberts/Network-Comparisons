@@ -14,6 +14,7 @@ import os
 import tensorflow as tf
 import multiprocessing as mp
 import cv2
+import csv
 
 # Loads images
 def load_image(addr,res):
@@ -70,8 +71,11 @@ def predict_np(images,graph_path):
         # Predict it
         output_dict =saved_model_predictor(input_dict)
 
-        inferences[j], confidences[j]= list(output_dict["classes"]), list(output_dict["probabilities"][0])
-
+        inferences[j], confidences[j]= output_dict["classes"], list(output_dict["probabilities"][0])
+    
+    # Unpack
+    inferences = [inf[0] for inf in inferences]
+    
     # Make return dictionary
     results = {'inferences':inferences,'confidences': confidences}
     return results
@@ -113,6 +117,59 @@ def predict_imgs(images,graph_path,res=(28,28,3)):
         input_array[img_ix,:,:,:] = img
     
     results = predict_np(input_array,graph_path)
-    results['names'] = names
+    
+    # Add names
+    results['names'] = [name[0] for name in names]
 
     return results
+
+def mk_prediction(save_dir,labels_dict,res,
+                    data_dir='test_images',
+                    out_name = 'predicitons'
+                    ):
+    """
+    Predict classes from raw image files. 
+    save_dir: Directory containing model's .pd file. (str)
+    data_dir: Directory containing images to classify. (str)
+    labels_file: Name of the csv file with the labels to category mapping. (str)
+    col_names: Name of the columns from the csv labels_file. 'NAME' should be actual\
+    class name. 'LABEL' is the integer label used in the model.(list)
+    """
+
+    labels_key = labels_dict
+    wrk_dir = os.getcwd()
+    graph_path = '/'.join([wrk_dir,save_dir])
+    print('Graph path: %s'%(graph_path))
+
+    # Get image directory and image path names
+    images = os.listdir(data_dir)
+    images = ['/'.join([data_dir,img]) for img in images]
+
+    num_imgs = len(images)
+    names = list(labels_key['NAME'])
+
+    # Get prediction results
+    results = predict_imgs(images,graph_path,res=res)
+
+    # Write the csv
+    with open(out_name+'.csv','wb') as outfile:
+        fieldnames = results.keys()
+        writer = csv.writer(outfile)
+        
+        # Write the header
+        writer.writerow(fieldnames)
+
+        # Assumes each key has same number of elements
+        for i in range(num_imgs):
+            name, confidences, inferences  = results['names'][i], results['confidences'][i], results['inferences'][i]
+            writer.writerow([name,confidences,inferences])
+        
+
+    
+    #results_df = pd.DataFrame(results, columns=columns)
+    # Round the probabilities 
+    #results_df[names] = results_df[names].apply(lambda x: pd.Series.round(x,4))
+
+    # Save the results
+    #results_df.to_csv(out_name+'.csv')
+    #print(results_df.head())

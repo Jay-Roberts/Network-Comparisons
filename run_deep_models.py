@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 import parser
 import argparse
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Input Arguments
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    print(args)
+    #print(args)
     # Set python level verbosity
     tf.logging.set_verbosity(args.verbosity)
     # Set C++ Graph Execution level verbosity
@@ -136,18 +137,27 @@ if __name__ == '__main__':
     classes = len(os.listdir(args.file_dir[0]))
 
 
-    #Create the model
-    test_screen_shot_model = models.ExpModel(args.block,args.depth,input_fn,
-                                            model_dir=args.model_dir,
-                                            input_shape = input_shape,
-                                            dt=args.dt,num_classes=classes)
+    # Create the class
+    # Set model parameters
+    model_param = {'block':'f_E',
+                'depth':1,
+                'dt':0.1,
+                'conv_spec':[5,16],
+                'learning_rate':0.01,
+                'activation':tf.nn.relu}
+    test_screen_shot_model = models.DeepModel('van',1, 
+                                                        input_shape = (28,28,3),
+                                                        conv_spec = [5,16],
+                                                        num_classes=5,
+                                                        dt=0.01,
+                                                        learning_rate=.001,
+                                                        activation=tf.nn.relu 
+                                                        )
     
-    # Train Eval and Save
-    test_screen_shot_model.train_and_eval(args.file_dir[0],
-                                        train_steps=args.train_steps,
-                                        batch_size=args.train_batch_size,
-                                        eval_steps=args.eval_steps)
-    # Predict
-    #test_screen_shot_model.predict(col_names=['GAMEID','LABEL'])
+    test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
+                        train_steps=2,
+                        eval_steps=2)
+    model_path = 'dtest/28x28x3_5/van1/traintest/1520456939'
+    test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/',model_path=model_path)
 
 

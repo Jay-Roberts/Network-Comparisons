@@ -1,12 +1,8 @@
 import tensorflow as tf
-from deep_models import train_eval_exp
-from deep_models import blocks
-from deep_models import predict
+import csv
 import pickle
-import numpy as np
-import pandas as pd 
 import os
-import glob
+import blocks
 
 class ExpModel:
     def __init__(self,block,depth,input_fn,
@@ -19,7 +15,7 @@ class ExpModel:
         """
         Creates a Stochastic, or not, residual network with depth-number of block type layers.
         block: Choice of block to repeat.
-                Must be from {'van',Stf_EM','f_E'}. (str)
+                Must be from {'Stf_EM','f_E'}. (str)
         depth: Number of repeats of block. (int)
         input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
         model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)
@@ -32,13 +28,11 @@ class ExpModel:
         dt: (Optional) Step size for blocks. Default 0.1 (float)
         conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
         """
-        if input_fn =='mnist':
-            input_shape = (28,28,1)
+
+
         # The model directory is:
         # block/depth/model_dir
-        input_name = 'x'.join([str(x) for x in input_shape])
-        d_in = '_'.join([str(depth),input_name])
-        save_path = '/'.join(['models',d_in,model_dir])
+        save_path = '/'.join(['models',block,str(depth)+'_layer',model_dir])
         att_path = '/'.join([save_path,'ATTRIBUTES'])
         
         if not os.path.isdir(save_path):
@@ -46,7 +40,7 @@ class ExpModel:
             old_atr = None
         else:
             print('Previous model found')
-            # The attributes are pickeled in a dictionary
+                        # The attributes are pickeled in a dictionary
             with open(att_path,'rb') as attr_file:
                 old_atr = pickle.load(attr_file)
             
@@ -62,7 +56,6 @@ class ExpModel:
         else:
             self.input_fn = train_eval_exp.INPUT_FNS[input_fn]
             self.input_shape = input_shape
-            print('input_shape ',input_shape)
 
         # Deep layer attributes
         self.depth = depth
@@ -72,9 +65,8 @@ class ExpModel:
         self.dt = dt    # Step size
 
         # First and last layer attributes
+
         self.classes = num_classes  # Number of names to categorize
-        
-        # Save attributes
         self.model_dir = save_path          
 
         
@@ -85,7 +77,7 @@ class ExpModel:
                         'activation': self.act,
                         'block': self.block_fn,
                         'dt': self.dt,
-                        'input_shape': self.input_shape,
+                        'input_shpae': self.input_shape,
                         'conv_shape': self.conv_shape,
                         'classes': self.classes}
         
@@ -99,14 +91,13 @@ class ExpModel:
         #----------------------------------------
         #       MODEL FUNCTION
         #----------------------------------------
-        print('ATTRIBUTES: ', ATTRIBUTES)
+
         def mk_model_fn(features,labels=None,mode=None):
             print('MODE:',mode)
             # Input Layer
             # Reshape X to 4-D tensor: [batch_size, width, height, channels]
-            
-            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape),name = 'input')
-            
+            input_layer = tf.reshape(features["x"], [-1]+list(self.input_shape))
+
             # MNIST is fed labels directly
             # Need to pick out features for the training of other models
             if not self.input_fn == 'mnist':
@@ -299,13 +290,14 @@ class ExpModel:
         #----------------------------------------
 
 
-        def mk_prediction(  data_dir='test_images',
+        def mk_prediction(save_dir,
+                            data_dir='test_images',
                             labels_file = 'labels_key.csv',
                             col_names = ['NAME','LABEL'],
                             out_name = 'predicitons'
                             ):
             """
-            Predict classes from raw image files. Chooses most recent model saved in save_dir.
+            Predict classes from raw image files. 
             save_dir: Directory containing model's .pd file. (str)
             data_dir: Directory containing images to classify. (str)
             labels_file: Name of the csv file with the labels to category mapping. (str)
@@ -313,29 +305,11 @@ class ExpModel:
             class name. 'LABEL' is the integer label used in the model.(list)
             """
 
-            # Get the model directory
             wrk_dir = os.getcwd()
-            #graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
-            graph_path = self.exp_dir
+            graph_path = '/'.join([wrk_dir,self.exp_dir,save_dir])
             print('Graph path: %s'%(graph_path))
 
-            # Get most recent model
-            #
-            path_contents = os.listdir(graph_path)
-            path_contents = map(lambda loc_f: '/'.join([graph_path,loc_f]),path_contents)
-            path_contents = [dir for dir in path_contents if len(glob.glob(dir+'/*.pb'))>0]
-            
-            # Get time models were modified
-            model_times = map(lambda dir: os.path.getmtime(dir),path_contents)
-            model_times = list(model_times)
-        
-            recent_ix = model_times.index(max(model_times))
-
-            graph_path = path_contents[recent_ix]
-
-
             # Get image directory and image path names
-            #
             images = os.listdir(data_dir)
             images = ['/'.join([data_dir,img]) for img in images]
 
@@ -359,7 +333,7 @@ class ExpModel:
             
             # Get prediction results
             results =predict.predict_imgs(images,graph_path,res=self.input_shape)
-            print(results)
+
             # Format them to be a DataFrame
             results = list(zip(results['names'],results['confidences'],results['inferences']))
     
@@ -379,7 +353,160 @@ class ExpModel:
 
             # Save the results
             results_df.to_csv(out_name+'.csv')
+            print(results_df.head())
 
         self.predict = mk_prediction    
 
+
+class DeepModel:
+    def __init__(self,block,depth,
+                    model_dir='dtest',
+                    input_shape=(28,28,3),
+                    num_classes=10,
+                    conv_spec = [5,16],
+                    dt=.1,
+                    learning_rate=.001,
+                    activation=tf.nn.relu,
+                    mnist=False):
+        """
+        Creates a Stochastic, or not, residual network with depth-number of block type layers.
+        block: Choice of block to repeat.
+                Must be from {'Stf_EM','f_E'}. (str)
+        depth: Number of repeats of block. (int)
+        input_fn: Must be 'mnist' or key from INPUT_FNS dictionary. (str)
+        model_dir: (Optional) Directory to store model outputs. Default 'Models' (str)
+        color: (Optional) Whether data has color channel. Default False (bool)
+        classes: (Optional) Number of classes the data has. Default 10. (int)
+        input_shape: (Optional) Resolution of input image. Default (28,28). (tup)
+        filters: (Optional) Number of filters for initial convolution. Default 16 (int)
+        activation: (Optional) Activation function of initial and final layer of network. 
+                    Default is relu. (function)
+        dt: (Optional) Step size for blocks. Default 0.1 (float)
+        conv: Size of square kernel to use (int), Number of filters (int). Default [5,16] (list)
+        """
+
+        self.mnsit = mnist
+        # The model directory is:
+        # block/depth/model_dir
+        input_shape_path = 'x'.join([str(n) for n in input_shape])
+        data_path = '_'.join([input_shape_path,str(num_classes)])
+        save_path = '/'.join([model_dir,data_path, block+str(depth)])
+        self.model_dir = save_path
+        self.exp_dir = save_path
+
+        att_path = '/'.join([save_path,'ATTRIBUTES.P'])
+        
+        if not os.path.isdir(save_path):
+            os.makedirs(save_path)
+            old_atr = None
+        elif os.path.isfile(att_path):
+            print('Previous model found')
+                        # The attributes are pickeled in a dictionary
+            with open(att_path,'rb') as attr_file:
+                old_atr = pickle.load(attr_file)
+        else:
+            old_atr = None
+        
+        # input_fn based on data type
+        if block[0]=='S':
+            self.stoch = True
+        else:
+            self.stoch = False
+        
+
+        # Make a dictionary to hold attribute info
+        # save this to prevent overwritting in same model_dir
+        print(block)
+        block_fn = blocks.BLOCKS[block]
+        ATTRIBUTES = {  'depth': depth,
+                        'activation': activation,
+                        'block': block_fn,
+                        'dt': dt,
+                        'input_shape': input_shape,
+                        'conv_spec': conv_spec,
+                        'classes': num_classes,
+                        'learning_rate': learning_rate
+                        }
+        
+        self.model_specs = ATTRIBUTES
+        
+        if old_atr:
+            assert ATTRIBUTES == old_atr, "Existing model parameters do not match current model.\
+                                        Remove existing model or rename new model_dir."
+        else:
+            with open(att_path,'wb') as attr_file:
+                pickle.dump(ATTRIBUTES, attr_file)
+        
+        # Make the model function
+        import model_fns
+        self.model_fn = lambda features, labels, mode: model_fns.model_fn(self.model_specs,
+                                                                        features=features,
+                                                                        labels=labels,
+                                                                        mode=mode)
     
+    # Define the training and evaluation routine
+    def train_and_eval(self,data_dir,exp_dir,
+                        train_steps=None,
+                        train_epochs=None,
+                        train_batch=100,
+                        eval_steps=None,
+                        eval_epochs=None,
+                        eval_batch=100):
+        
+        import train_eval_exp
+        
+        in_shp  = self.model_specs['input_shape']
+        export_dir = '/'.join([self.model_dir,exp_dir])
+        
+        # Update export directory for training
+        self.exp_dir = export_dir
+
+        train_eval_exp.train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
+                        train_steps=train_steps,
+                        train_batch=train_batch,
+                        train_epochs=train_epochs,
+                        eval_steps=eval_steps,
+                        eval_batch=eval_batch,
+                        eval_epochs=eval_epochs)
+    
+    def predict(self,images_dir,model_path=None,
+            labels_key='labels_key.csv',
+            out_name='predictions'):
+
+        # Get pb dir
+        if model_path:
+            save_dir = model_path
+            print('SAVE DIR: ', save_dir)
+        else:
+            # Find most recent
+            old_models = os.listdir(self.exp_dir)
+            old_models = [self.exp_dir + '/'+x for x in old_models]
+
+            mod_times = [os.path.getmtime(x) for x in old_models]
+            most_recent_ix = mod_times.index( max(mod_times))
+
+            save_dir = old_models[most_recent_ix]
+
+        # Make labels key for mnist
+        if self.mnsit:
+            labels_dict = {'NAME': range(10), 'LABEL': range(10)}
+        
+        else:
+            with open(labels_key,mode='rb') as csvfile:
+                reader = csv.reader(csvfile)
+                
+                # Skip past header
+                reader.next()
+                labels_dict = {'NAME':[],'LABEL':[]}
+
+                for row in reader:
+                    name, label = row
+                    labels_dict['NAME'].append(name)
+                    labels_dict['LABEL'].append(label)
+        
+        res = self.model_specs['input_shape']
+
+        from predict import mk_prediction
+        mk_prediction(save_dir,labels_dict, res,data_dir=images_dir,out_name =out_name)
+
+

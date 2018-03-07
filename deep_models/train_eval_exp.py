@@ -107,7 +107,7 @@ def screen_shot_input_fn(name,resolution,
 
     # Batch it and make iterator
     dataset = dataset.batch(batch_size)
-    dataset = dataset.repeat()
+    dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
     features = iterator.get_next()
@@ -122,7 +122,7 @@ def screen_shot_input_fn_28x28(name,file_dir = ['TFRecords'],
                     batch_size = 100):
     return screen_shot_input_fn(name,(28,28,3),file_dir = file_dir,
                     num_epochs = None,
-                    shuffle = True,
+                    shuffle = shuffle,
                     batch_size = 100)
 
 def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
@@ -131,9 +131,120 @@ def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
                     batch_size = 100):
     return screen_shot_input_fn(name,(224,224,3),file_dir = file_dir,
                     num_epochs = None,
-                    shuffle = True,
+                    shuffle = shuffle,
                     batch_size = 100)
 
 # Dictionary of available input functions
-INPUT_FNS= {'screen_shots_28':screen_shot_input_fn_28x28,
-            'screen_shots_224':screen_shot_input_fn_224x224}
+INPUT_FNS= {(28,28,3):screen_shot_input_fn_28x28,
+            (224,224,3):screen_shot_input_fn_224x224,
+            (28,28,1):'mnist'}
+
+# Training routines
+
+#def train_and_eval( data_dir,model_fn,model_dir,input_shape,
+#                        exp_dir,
+#                        batch_size=100,
+#                        train_epochs=None,
+#                        max_train_steps=None,
+#                        max_eval_steps=None,
+#                        eval_epochs=None):
+def train_and_eval( data_dir,model_fn,model_dir,input_shape,
+                        exp_dir,
+                        train_steps=None,
+                        train_epochs=None,
+                        train_batch=100,
+                        eval_steps=None,
+                        eval_epochs=None,
+                        eval_batch=100
+                        ):
+    """
+    Parameters:
+        Train and evaluate the model using Estimators. Eval batch size is set to 1.
+        data_dir: Where the data is stored. Must be accessible by input_fn. 
+                    For mnist set to None. (str)
+        exp_dir: Directory to export checkpoints and saved model. (str)
+        batch_size: Training batch size. Default 100. (int)
+        train_epochs: Number of epochs to train for. If None must set train_steps.
+                    Default None. (int)
+        train_steps: Max number of training steps. If none will run until out of inputs.
+                    Default None (int)
+        eval_epochs: Number of evaluation epochs. Default None (int)
+    
+    """
+    # Get input function
+    input_fn = INPUT_FNS[input_shape]
+
+
+    # Construct the classifier
+    classifier = tf.estimator.Estimator(model_fn=model_fn,
+                                        model_dir=model_dir)
+    
+
+    # Set up logging for predictions
+    # Log the values in the "Softmax" tensor with label "probabilities"
+    tensors_to_log = {"probabilities": "softmax_tensor"}
+    logging_hook = tf.train.LoggingTensorHook(
+        tensors=tensors_to_log, every_n_iter=500)
+
+
+
+    # Make training and evaluation input functions
+    # MNIST input function downloads the data here
+    if list(input_shape) == [28,28,1]:
+        # Load training and eval data
+        mnist = tf.contrib.learn.datasets.load_dataset("mnist")
+        train_data = mnist.train.images  # Returns np.array
+        train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
+        eval_data = mnist.test.images  # Returns np.array
+        eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+
+        train_input = tf.estimator.inputs.numpy_input_fn(
+            x={"x": train_data},
+            y=train_labels,
+            batch_size=batch_size,
+            num_epochs=train_epochs,
+            shuffle=True)
+        
+        eval_input = tf.estimator.inputs.numpy_input_fn(
+            x={"x": eval_data},
+            y=eval_labels,
+            num_epochs=eval_epochs,
+            shuffle=False)
+        
+        # MNIST doesn't have labels as input so its
+        # feature spec is different
+        feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = [28,28,1])}
+
+    # Handle non mnist data
+    else:
+        # Get the train input function
+        train_input = lambda: input_fn('train',
+            file_dir = [data_dir],
+            num_epochs=train_epochs,
+            batch_size=train_batch)
+
+        # Don't shuffle evaluation data
+        eval_input = lambda: input_fn('eval', 
+            file_dir=[data_dir],
+            batch_size=eval_batch,
+            num_epochs=eval_epochs,
+            shuffle=False)
+        
+        # Make the feature spec for exporting
+        feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = input_shape),
+                        "y":tf.placeholder(dtype = tf.int32,shape = [1])}
+
+    #Train the model
+    classifier.train(train_input,
+                    steps=train_steps,
+                    )
+
+    # Evaluate the model
+    eval_name = 'eval'
+    classifier.evaluate(eval_input,
+                        steps = eval_steps)
+    
+    # Export the model
+    classifier.export_savedmodel(exp_dir,
+                        tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
+                        )
