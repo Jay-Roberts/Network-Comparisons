@@ -167,13 +167,3 @@ def mk_prediction(save_dir,labels_dict,res,
         for i in range(num_imgs):
             name, confidences, inferences  = results['names'][i], results['confidences'][i], results['inferences'][i]
             writer.writerow([name,confidences,inferences])
-        
-
-    
-    #results_df = pd.DataFrame(results, columns=columns)
-    # Round the probabilities 
-    #results_df[names] = results_df[names].apply(lambda x: pd.Series.round(x,4))
-
-    # Save the results
-    #results_df.to_csv(out_name+'.csv')
-    #print(results_df.head())
