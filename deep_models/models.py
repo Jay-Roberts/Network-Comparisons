@@ -13,6 +13,7 @@ class DeepModel:
                     dt=.1,
                     learning_rate=.001,
                     activation=tf.nn.relu,
+                    stoch_passes=None,
                     mnist=False):
         """
         Class to create, train, evaluate, save, and make inferences from deep network models.
@@ -74,11 +75,7 @@ class DeepModel:
         else:
             old_atr = None
         
-        # input_fn based on data type
-        if block[0]=='S':
-            self.stoch = True
-        else:
-            self.stoch = False
+        
         
 
         # Make a dictionary to hold attribute info
@@ -94,6 +91,10 @@ class DeepModel:
                         'classes': num_classes,
                         'learning_rate': learning_rate
                         }
+        # model_fn based on data type
+        if stoch_passes:
+            # If stochastic add passes to attributes
+            ATTRIBUTES['stoch_passes'] = stoch_passes
         
         self.model_specs = ATTRIBUTES
         
@@ -105,8 +106,15 @@ class DeepModel:
             with open(att_path,'wb') as attr_file:
                 pickle.dump(ATTRIBUTES, attr_file)
         
-        # Make the model function
-        from model_fns import model_fn
+        # Import appropriate model function
+        if stoch_passes:
+            # Pick out weak model
+            if block[0] == 'W':
+                from model_fns import weak_stoch_model_fn as model_fn
+        else:
+            from model_fns import model_fn as model_fn
+        
+        # Make model function
         self.model_fn = lambda features, labels, mode: model_fn(self.model_specs,
                                                                         features=features,
                                                                         labels=labels,
