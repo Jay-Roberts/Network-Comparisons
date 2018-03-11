@@ -48,6 +48,9 @@ and saved in the path 'datadir/class/train_n.tfrecord' where class is a director
 
 If a dataset of images already exists the you could use **Processor.py** from the [Screen Shot Classifier](https://github.com/Jay-Roberts/Screen_Shot_Classifier) repository.
 
+## Visualization
+
+The visualization techniques are experimental. If you are interested in using them, I highly recommend Bhagyesh Vikani, Falak Shah's [tf_cnnvis](https://github.com/InFoCusp/tf_cnnvis) that we use here. 
 
 ## API
 
