@@ -116,12 +116,12 @@ class DeepModel:
         if stoch_passes:
             # Pick out weak model
             if block[0] == 'W':
-                from model_fns import weak_stoch_model_fn as model_fn
+                from .model_fns import weak_stoch_model_fn as model_fn
             else:
                 print('Strong models are not currently supported. Using weak model instead')
-                from model_fns import weak_stoch_model_fn as model_fn
+                from .model_fns import weak_stoch_model_fn as model_fn
         else:
-            from model_fns import model_fn as model_fn
+            from .model_fns import model_fn as model_fn
         
         # Make model function
         self.model_fn = lambda features, labels, mode: model_fn(self.model_specs,
@@ -164,7 +164,7 @@ class DeepModel:
         # Update export directory for training
         self.exp_dir = export_dir
 
-        from train_eval_exp import train_and_eval
+        from .train_eval_exp import train_and_eval
         train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
                         train_steps=train_steps,
                         train_batch=train_batch,
@@ -223,7 +223,7 @@ class DeepModel:
         
         res = self.model_specs['input_shape']
 
-        from predict import mk_prediction
+        from .predict import mk_prediction
         mk_prediction(save_dir,labels_dict, res,data_dir=images_dir,out_name =out_name)
 
 

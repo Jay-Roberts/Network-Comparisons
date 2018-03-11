@@ -1,1 +1,1 @@
-__all__ = ["blocks","predict","train_eval_exp"]
+__all__ = ["blocks","predict","train_eval_exp","model_fns"]
