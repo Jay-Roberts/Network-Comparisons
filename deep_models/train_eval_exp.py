@@ -211,13 +211,14 @@ def train_and_eval( data_dir,model_fn,model_dir,input_shape,
         train_input = tf.estimator.inputs.numpy_input_fn(
             x={"x": train_data},
             y=train_labels,
-            batch_size=batch_size,
+            batch_size=train_batch,
             num_epochs=train_epochs,
             shuffle=True)
         
         eval_input = tf.estimator.inputs.numpy_input_fn(
             x={"x": eval_data},
             y=eval_labels,
+            batch_size=eval_batch,
             num_epochs=eval_epochs,
             shuffle=False)
         

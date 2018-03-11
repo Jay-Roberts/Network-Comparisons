@@ -96,7 +96,13 @@ class DeepModel:
             # If stochastic add passes to attributes
             ATTRIBUTES['stoch_passes'] = stoch_passes
         
+        if mnist:
+            ATTRIBUTES['mnist'] = True
+        
         self.model_specs = ATTRIBUTES
+
+        
+            
         
         # Check for old model compatability
         if old_atr:

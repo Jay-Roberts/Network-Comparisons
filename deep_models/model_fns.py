@@ -15,6 +15,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
             'conv_spec': [filter size, number of filters] (list),
             'classes': number of classes (int),
             'learning_rate': learning rate for training (float)
+            'mnist': whether data is mnist. (bool)
                         }
     """
     
@@ -30,6 +31,10 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         ]
     inputs = [exp_spec.get(key) for key in keys]
 
+    if 'mnist' in exp_spec.keys():
+        is_mnist = True
+    else:
+        is_mnist = False
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
     activation,learning_rate = exp_spec['activation'], exp_spec['learning_rate']
@@ -40,8 +45,9 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
 
     # MNIST is fed labels directly
     # Need to pick out features for the training of other models
-    if not input_shape == 'mnist':
+    if not is_mnist:
         labels = features["y"]
+
         
     
     # Initial convolution layer
