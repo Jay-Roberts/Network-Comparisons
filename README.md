@@ -9,7 +9,7 @@ Clone the repository to get the *deep_models* package. Currently it must be in t
 ```git
     git clone https://github.com/Jay-Roberts/Network-Comparisons.git
 ```
-Testing on the mnist model uses tensorflows built in mnist dataset. First create the class.
+Making models for **MNIST Dataset** uses tensorflows built in mnist dataset. First create the class.
     
 ```python
 
@@ -39,6 +39,15 @@ To predict from the model.
     test_screen_shot_model.predict('testimages/')
 ```
 If the _train _ and _ eval_ method has been run the model path can be found in self.exp_dir, if not then you must specify the path the the directory containing the .pb save file. 
+
+For custom image classification the data set must be stored in .tfrecord files with a feature containing
+* 'label': tf.train.Feature.Int64List
+* 'image': tf.train.Feature.BytesList
+
+and saved in the path 'datadir/class/train_n.tfrecord' where class is a directory for each class and n is a unique identifier for the file.
+
+If a dataset of images already exists the you could use **Processor.py** from the [Screen Shot Classifier](https://github.com/Jay-Roberts/Screen_Shot_Classifier) repository.
+
 
 ## API
 
