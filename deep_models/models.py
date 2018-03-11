@@ -19,7 +19,7 @@ class DeepModel:
         Class to create, train, evaluate, save, and make inferences from deep network models.
         Inputs:
             block: Choice of block to repeat.
-                    Must be from {'Stf_EM','f_E'}. (str)
+                    Must be from {'Stf_EM','f_E','van','Wf_EM'}. (str)
             depth: Number of repeats of block. (int)
             model_dir: (Optional) Directory to store model outputs. 
                 Default 'd_models' (str)
@@ -68,7 +68,7 @@ class DeepModel:
             old_atr = None
 
         elif os.path.isfile(att_path):
-            # The attributes are pickeled in a dictionary
+            # The attributes are pickled in a dictionary
 
             with open(att_path,'rb') as attr_file:
                 old_atr = pickle.load(attr_file)
@@ -110,6 +110,9 @@ class DeepModel:
         if stoch_passes:
             # Pick out weak model
             if block[0] == 'W':
+                from model_fns import weak_stoch_model_fn as model_fn
+            else:
+                print('Strong models are not currently supported. Using weak model instead')
                 from model_fns import weak_stoch_model_fn as model_fn
         else:
             from model_fns import model_fn as model_fn

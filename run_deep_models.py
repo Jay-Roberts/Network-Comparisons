@@ -19,7 +19,7 @@ if __name__ == '__main__':
         required=True,
         choices=['van',
         'f_E',
-        'Stf_EM'])
+        'Sf_EM'])
     
     parser.add_argument(
         '--depth',
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--stoch-runs',
+        '--stoch-passes',
         help='Number of simulations to run montecarlo for stochastic models',
         type=int,
         default=1
@@ -111,20 +111,15 @@ if __name__ == '__main__':
             'INFO',
             'WARN'
         ],
-        default='INFO',
+        default=None,
     )
 
 
     args = parser.parse_args()
     #print(args)
     # Set python level verbosity
-    tf.logging.set_verbosity(args.verbosity)
-    # Set C++ Graph Execution level verbosity
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(
-        tf.logging.__dict__[args.verbosity] / 10)
-
-    # Slows things down. Turn off for large models
-    tf.logging.set_verbosity('INFO')
+    if args.verbosity:
+        tf.logging.set_verbosity(args.verbosity)
 
     # Get derived model inputs.
     #
@@ -138,26 +133,20 @@ if __name__ == '__main__':
 
 
     # Create the class
-    # Set model parameters
-    model_param = {'block':'f_E',
-                'depth':1,
-                'dt':0.1,
-                'conv_spec':[5,16],
-                'learning_rate':0.01,
-                'activation':tf.nn.relu}
-    test_screen_shot_model = models.DeepModel('van',1, 
-                                                        input_shape = (28,28,3),
-                                                        conv_spec = [5,16],
-                                                        num_classes=5,
-                                                        dt=0.01,
-                                                        learning_rate=.001,
-                                                        activation=tf.nn.relu 
-                                                        )
-    
+    test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                input_shape = (28,28,3),
+                                conv_spec = [5,16],
+                                num_classes=5,
+                                dt=0.01,
+                                learning_rate=.001,
+                                activation=tf.nn.relu,
+                                stoch_passes=args.stoch_passes)
+    # Train and eval
     test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
-                        train_steps=2,
-                        eval_steps=2)
-    model_path = '/home/jay/Network-Comparisons/dtest/28x28x3_5/van1/traintest/1520458227'
-    test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/',model_path=model_path)
+                        train_steps=args.train_steps,
+                        eval_steps=args.eval_steps)
+    #Predict
+    model_path = test_screen_shot_model.exp_dir
+    test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/')
 
 

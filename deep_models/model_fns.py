@@ -171,40 +171,74 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         filters=filters,
         kernel_size=kernel_size, # Make small to allow for more layers
         padding="same",
-        activation=activation)
+        activation=activation,
+        name='InitConv')
     
-    
-    # Deep portion
-    # Step size - set for stability
-    h = dt
-    block_fn = block
-    Deep = tf.contrib.layers.repeat(conv0,
-                                        depth,
-                                        block_fn, 
-                                        h,
-                                        conv_spec, scope='')
+    #
+    # Make deep repeater from scratch to control scope
+    #
+    def deep_ones(x,d,blk,hh,conv,scope='',name='deep_twos'):
+        deep = x
+        for i in range(d):
+            # Blocks have reuse = tf.AUTO_REUSE this allows for looping
+            # with same kernel.
+            iname = 'x'.join([name,str(i)])
 
+            deep = blk(deep, hh,conv,scope=scope,name=iname)
+        return deep
+    
+
+    # Run the process once to initialize kernels and get guess
+    h = dt
+    Deep = deep_ones(conv0,depth,block,h,conv_spec)
+    
     # Dense Layer
     # Make sure size matches Deep
     Deep_size = input_shape[0]*input_shape[1]*conv_spec[1]
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
+    # Combine the convolution features
     dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
-    dropout = tf.layers.dropout( inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
-    last = dropout
-    # Logits Layer
-    # Units is number of games
-    logits = tf.layers.dense(inputs=last, units=num_classes)
+    
+    # Try a basic nonsense output
+    # Compress into one output
+    guess = tf.layers.dense(inputs=dense, units=1)
 
+    #
+    # Stochastic simulation phase
+    #
+
+    for run in range(passes):
+        Deep = deep_ones(conv0,depth,block,h,conv_spec,scope='deep_twos')
+
+        # Dense Layer
+        # Make sure size matches Deep
+        Deep_size = input_shape[0]*input_shape[1]*conv_spec[1]
+        Deep_flat = tf.reshape(Deep, [-1, Deep_size])
+
+        # Combine the convolution features
+        dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
+        
+        # Try an overly simple output
+
+        # Compress into one output
+        guess = tf.add(guess,guess)
+
+    # Make it an average
+    normalizer = 1/float(passes-1)
+    guess = tf.scalar_mul(normalizer,guess)
+
+    loop_out = tf.reshape(guess,[-1],name="loop_out")
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
-        "classes": tf.argmax(input=logits, axis=1),
-        # Add `softmax_tensor` to the graph. It is used for PREDICT and by the
-        # `logging_hook`.
-        "probabilities": tf.nn.softmax(logits, name="softmax_tensor")
+        "classes": loop_out,
+        "probabilities": tf.zeros([1,1])
     }
     
-    
+    # Calculate Loss (for both TRAIN and EVAL modes)
+    loss = tf.losses.absolute_difference(labels,loop_out)
+
+
     # Here we modify the prediction routine to save exported Estimators after evaluation
     if mode == tf.estimator.ModeKeys.PREDICT:
         print('Infer')
@@ -214,9 +248,6 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         return tf.estimator.EstimatorSpec(mode=mode,
                                         predictions=predictions,
                                         export_outputs=exp_outs)
-
-    # Calculate Loss (for both TRAIN and EVAL modes)
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
 
     # Configure the Training Op (for TRAIN mode)
     if mode == tf.estimator.ModeKeys.TRAIN:
