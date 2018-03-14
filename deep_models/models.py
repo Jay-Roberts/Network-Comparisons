@@ -92,7 +92,7 @@ class DeepModel:
                         'learning_rate': learning_rate
                         }
         # model_fn based on data type
-        if stoch_passes:
+        if stoch_passes != 0:
             # If stochastic add passes to attributes
             ATTRIBUTES['stoch_passes'] = stoch_passes
         
@@ -113,7 +113,7 @@ class DeepModel:
                 pickle.dump(ATTRIBUTES, attr_file)
         
         # Import appropriate model function
-        if stoch_passes:
+        if stoch_passes != 0:
             # Pick out weak model
             if block[0] == 'W':
                 from .model_fns import weak_stoch_model_fn as model_fn

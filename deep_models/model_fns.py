@@ -73,10 +73,12 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
 
     # Dense Layer
     # Make sure size matches Deep
+    #print('The resolution is ', input_shape[0], ' ', input_shape[1], ' ', conv_spec[1])
     Deep_size = input_shape[0]*input_shape[1]*conv_spec[1]
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
-    dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
+    # Ideally units is 1024, but using small value to allow for GPU Training on my GTX 970. Experiment here for the P100's
+    dense = tf.layers.dense(inputs=Deep_flat, units=32, activation=tf.nn.relu)
     dropout = tf.layers.dropout( inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
     last = dropout
     # Logits Layer
@@ -123,7 +125,8 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
-# Strong Stochastic CNN 
+# Strong Stochastic CNN
+
 def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     """
     Creates a stochastic model function according to experiment specifications exp_spec. Approximates

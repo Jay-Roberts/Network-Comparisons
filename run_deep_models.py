@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     # Create the class
     test_screen_shot_model = models.DeepModel(args.block,args.depth, 
-                                input_shape = (28,28,3),
+                                input_shape = input_shape,
                                 conv_spec = [5,16],
                                 num_classes=5,
                                 dt=0.01,
