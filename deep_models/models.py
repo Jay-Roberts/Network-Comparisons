@@ -113,7 +113,7 @@ class DeepModel:
                 pickle.dump(ATTRIBUTES, attr_file)
         
         # Import appropriate model function
-        if stoch_passes != 0:
+        if stoch_passes:
             # Pick out weak model
             if block[0] == 'W':
                 from .model_fns import weak_stoch_model_fn as model_fn
