@@ -118,7 +118,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
 
 # Residual Stochastic Convolutional Layer
 # This corresponds to Weak Explicit Euler-Maruyama
-def Wf_EM(input_layer, dt, shape, scope):
+def Wf_EM(input_layer, dt, shape, scope,name):
     """
     Explicit Euler Maruyama block with two  non-interactign branches, stochastic and deterministic\
     each has 2 convolutional layers then a residual shortcut.
@@ -143,7 +143,8 @@ def Wf_EM(input_layer, dt, shape, scope):
         kernel_size=size, # Make small to allow for more layers
         padding="same",
         activation=tf.nn.relu,
-        reuse=tf.AUTO_REUSE)
+        reuse=tf.AUTO_REUSE,
+        name=name)
 
     fs = tf.layers.conv2d(
         inputs=fss,
@@ -151,7 +152,8 @@ def Wf_EM(input_layer, dt, shape, scope):
         kernel_size=size, # Make small to allow for more layers
         padding="same",
         activation=tf.nn.relu,
-        reuse=tf.AUTO_REUSE)
+        reuse=tf.AUTO_REUSE,
+        name=name)
 
     # Compute Deterministic function
     fdd = tf.layers.conv2d(
@@ -160,7 +162,8 @@ def Wf_EM(input_layer, dt, shape, scope):
         kernel_size=size, # Make small to allow for more layers
         padding="same",
         activation=tf.nn.relu,
-        reuse=tf.AUTO_REUSE)
+        reuse=tf.AUTO_REUSE,
+        name=name)
     
     fd = tf.layers.conv2d(
         inputs=fdd,
@@ -168,7 +171,8 @@ def Wf_EM(input_layer, dt, shape, scope):
         kernel_size=size, # Make small to allow for more layers
         padding="same",
         activation=tf.nn.relu,
-        reuse=tf.AUTO_REUSE)
+        reuse=tf.AUTO_REUSE,
+        name=name)
 
     return tf.add( input_layer, tf.add( tf.scalar_mul(dt,fd) , tf.scalar_mul( root_dt, tf.multiply(fs,dz) ) ) )
 

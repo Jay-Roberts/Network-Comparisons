@@ -33,9 +33,8 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     inputs = [exp_spec.get(key) for key in keys]
 
     if 'mnist' in exp_spec.keys():
-        is_mnist = True
-    else:
-        is_mnist = False
+        input_shape = (28,28,1)
+    
     
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
@@ -44,11 +43,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
     input_layer = tf.reshape(features["x"], [-1]+list(input_shape))
-
-    # MNIST is fed labels directly
-    # Need to pick out features for the training of other models
-    if not is_mnist:
-        labels = features["y"]
+    labels = features["y"]
 
     # Initial convolution layer
     kernel_size, filters = conv_spec
@@ -60,7 +55,6 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         padding="same",
         activation=activation)
     
-    print(conv0)
     # Deep portion
     # Step size - set for stability
     h = dt
@@ -158,6 +152,9 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         ]
     inputs = [exp_spec.get(key) for key in keys]
 
+    if 'mnist' in exp_spec.keys():
+        input_shape = (28,28,1)
+
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
     activation,learning_rate, passes = exp_spec['activation'], exp_spec['learning_rate'], exp_spec['stoch_passes']
@@ -168,11 +165,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
     input_layer = tf.reshape(features["x"], [-1]+list(input_shape))
 
-    # MNIST is fed labels directly
-    # Need to pick out features for the training of other models
-    if not input_shape == 'mnist':
-        labels = features["y"]
-        
+    labels = features["y"]   
     
     # Initial convolution layer
     kernel_size, filters = conv_spec

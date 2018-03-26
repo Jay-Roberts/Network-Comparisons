@@ -93,6 +93,7 @@ class DeepModel:
                         'learning_rate': learning_rate,
                         'final_units': final_units
                         }
+                        
         # model_fn based on data type
         if stoch_passes != 0:
             # If stochastic add passes to attributes
