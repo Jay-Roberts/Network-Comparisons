@@ -133,13 +133,13 @@ if __name__ == '__main__':
     classes = len(os.listdir(args.file_dir[0]))
 
     # Test MNIST
-    #test_screen_shot_model = models.DeepModel('Wf_EM',1, 
-    #                            input_shape = (28,28,1),
-    #                            conv_spec = [5,16],
-    #                            num_classes=10,
-    #                            mnist=True,
-    #                            stoch_passes=2,
-    #                            final_units=10)
+    test_screen_shot_model = models.DeepModel('Wf_EM',1, 
+                                input_shape = (28,28,1),
+                                conv_spec = [5,16],
+                                num_classes=10,
+                                mnist=True,
+                                stoch_passes=2,
+                                final_units=10)
     # Test Screen Shots
     #test_screen_shot_model = models.DeepModel(args.block,args.depth, 
     #                            input_shape = input_shape,

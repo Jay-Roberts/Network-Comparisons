@@ -222,10 +222,12 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         # Combine the convolution features
         dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
         
+
+        guess1 = tf.layers.dense(inputs = dense, units = 1)
         # Try an overly simple output
 
         # Compress into one output
-        guess = tf.add(guess,guess)
+        guess = tf.add(guess,guess1)
 
     # Make it an average
     normalizer = 1/float(passes-1)
