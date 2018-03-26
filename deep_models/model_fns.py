@@ -1,4 +1,3 @@
-
 import tensorflow as tf 
 
 # Deterministic CNN 
@@ -190,7 +189,10 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
             deep = blk(deep, hh,conv,scope=scope,name=iname)
         return deep
-    
+
+    #
+    # Stochastic simulation phase
+    #    
 
     # Run the process once to initialize kernels and get guess
     h = dt
@@ -208,9 +210,6 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     # Compress into one output
     guess = tf.layers.dense(inputs=dense, units=1)
 
-    #
-    # Stochastic simulation phase
-    #
 
     for run in range(passes):
         Deep = deep_ones(conv0,depth,block,h,conv_spec,scope='deep_twos')
@@ -221,7 +220,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
         # Combine the convolution features
-        dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
+        dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
         
         # Try an overly simple output
 

@@ -19,7 +19,8 @@ if __name__ == '__main__':
         required=True,
         choices=['van',
         'f_E',
-        'Sf_EM'])
+        'Sf_EM',
+        'Wf_EM'])
     
     parser.add_argument(
         '--depth',
@@ -131,22 +132,31 @@ if __name__ == '__main__':
     # Find number of classes in TFRecords directory
     classes = len(os.listdir(args.file_dir[0]))
 
-
-    # Create the class
-    test_screen_shot_model = models.DeepModel(args.block,args.depth, 
-                                input_shape = input_shape,
-                                conv_spec = [5,16],
-                                num_classes=5,
-                                dt=0.01,
-                                learning_rate=.001,
-                                activation=tf.nn.relu,
-                                stoch_passes=args.stoch_passes)
+    # Test MNIST
+    #test_screen_shot_model = models.DeepModel('Wf_EM',1, 
+    #                            input_shape = (28,28,1),
+    #                            conv_spec = [5,16],
+    #                            num_classes=10,
+    #                            mnist=True,
+    #                            stoch_passes=2,
+    #                            final_units=10)
+    # Test Screen Shots
+    #test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+    #                            input_shape = input_shape,
+    #                            conv_spec = [5,16],
+    #                            num_classes=5,
+    #                            dt=0.01,
+    #                            learning_rate=.001,
+    #                            activation=tf.nn.relu,
+    #                            final_units=10,
+    #                            stoch_passes=args.stoch_passes)
+    
     # Train and eval
     test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
                         train_steps=args.train_steps,
                         eval_steps=args.eval_steps)
     #Predict
     model_path = test_screen_shot_model.exp_dir
-    test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/')
+    #test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/')
 
 

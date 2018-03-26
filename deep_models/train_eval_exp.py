@@ -209,22 +209,21 @@ def train_and_eval( data_dir,model_fn,model_dir,input_shape,
         eval_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
         train_input = tf.estimator.inputs.numpy_input_fn(
-            x={"x": train_data},
-            y=train_labels,
+            x={"x": train_data, "y": train_labels},
             batch_size=train_batch,
             num_epochs=train_epochs,
             shuffle=True)
         
         eval_input = tf.estimator.inputs.numpy_input_fn(
-            x={"x": eval_data},
-            y=eval_labels,
+            x={"x": eval_data, "y": eval_labels},
             batch_size=eval_batch,
             num_epochs=eval_epochs,
             shuffle=False)
         
         # MNIST doesn't have labels as input so its
         # feature spec is different
-        feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = [28,28,1])}
+        feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = [28,28,1]),
+                        "y": tf.placeholder(dtype=np.int32,shape = [1])}
 
     # Handle non mnist data
     else:
