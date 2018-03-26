@@ -204,7 +204,10 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     # Combine the convolution features
-    dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
+    dense = tf.layers.dense(inputs=Deep_flat,
+                            units=final_units,
+                            activation=tf.nn.relu,
+                            )
     
     # Try a basic nonsense output
     # Compress into one output
@@ -220,10 +223,20 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
         # Combine the convolution features
-        dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
+        dense = tf.layers.dense(inputs=Deep_flat,
+                                units=final_units,
+                                activation=tf.nn.relu,
+                                #scope='dense_two',
+                                name='inner_dense',
+                                reuse=tf.AUTO_REUSE)
         
 
-        guess1 = tf.layers.dense(inputs = dense, units = 1)
+        guess1 = tf.layers.dense(inputs = dense, 
+                                units = 1, 
+                                #scope='dense_two',
+                                name='inner_guess',
+                                reuse=tf.AUTO_REUSE)
+        
         # Try an overly simple output
 
         # Compress into one output

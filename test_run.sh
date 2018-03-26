@@ -2,9 +2,9 @@
 MODEL_DIR=test_loop
 BLOCK=van
 DEPTH=1
-FILE_DIR=TFRecords_224x224
-TRAIN_STEPS=500
-EVAL_STEPS=500
+FILE_DIR=TFRecords_28x28
+TRAIN_STEPS=2
+EVAL_STEPS=5
 STOCH_RUNS=0
 VERBOSITY=INFO # Slows things down. Remove for large scale training.
 
