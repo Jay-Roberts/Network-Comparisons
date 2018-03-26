@@ -60,7 +60,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         padding="same",
         activation=activation)
     
-    
+    print(conv0)
     # Deep portion
     # Step size - set for stability
     h = dt
@@ -69,7 +69,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
                                         depth,
                                         block_fn, 
                                         h,
-                                        conv_spec, scope='')
+                                        conv_spec, scope='Deep')
 
     # Dense Layer
     # Make sure size matches Deep
