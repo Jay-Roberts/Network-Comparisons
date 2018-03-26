@@ -10,6 +10,7 @@ class DeepModel:
                     input_shape=(28,28,3),
                     num_classes=10,
                     conv_spec = [5,16],
+                    final_units = 1024,
                     dt=.1,
                     learning_rate=.001,
                     activation=tf.nn.relu,
@@ -89,7 +90,8 @@ class DeepModel:
                         'input_shape': input_shape,
                         'conv_spec': conv_spec,
                         'classes': num_classes,
-                        'learning_rate': learning_rate
+                        'learning_rate': learning_rate,
+                        'final_units': final_units
                         }
         # model_fn based on data type
         if stoch_passes != 0:
@@ -100,9 +102,6 @@ class DeepModel:
             ATTRIBUTES['mnist'] = True
         
         self.model_specs = ATTRIBUTES
-
-        
-            
         
         # Check for old model compatability
         if old_atr:

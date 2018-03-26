@@ -25,6 +25,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         'input_shape',
         'num_classes',
         'conv_spec',
+        'final_units',
         'dt',
         'activation',
         'learning_rate'
@@ -35,9 +36,10 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         is_mnist = True
     else:
         is_mnist = False
+    
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
-    activation,learning_rate = exp_spec['activation'], exp_spec['learning_rate']
+    activation,learning_rate, final_units = exp_spec['activation'], exp_spec['learning_rate'], exp_spec['final_units']
     
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
@@ -48,8 +50,6 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     if not is_mnist:
         labels = features["y"]
 
-        
-    
     # Initial convolution layer
     kernel_size, filters = conv_spec
 
@@ -78,7 +78,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     # Ideally units is 1024, but using small value to allow for GPU Training on my GTX 970. Experiment here for the P100's
-    dense = tf.layers.dense(inputs=Deep_flat, units=32, activation=tf.nn.relu)
+    dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
     dropout = tf.layers.dropout( inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
     last = dropout
     # Logits Layer
@@ -151,6 +151,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         'input_shape',
         'num_classes',
         'conv_spec',
+        'final_units',
         'dt',
         'activation',
         'learning_rate'
@@ -160,6 +161,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
     activation,learning_rate, passes = exp_spec['activation'], exp_spec['learning_rate'], exp_spec['stoch_passes']
+    final_units = exp_spec['final_units']
     
     
     # Input Layer
@@ -207,7 +209,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     # Combine the convolution features
-    dense = tf.layers.dense(inputs=Deep_flat, units=1024, activation=tf.nn.relu)
+    dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
     
     # Try a basic nonsense output
     # Compress into one output
