@@ -213,7 +213,10 @@ class DeepModel:
                 reader = csv.reader(csvfile)
                 
                 # Skip past header
-                reader.next()
+                # python 2 code
+                #reader.next()
+                # python 3 code
+                next(reader)
                 labels_dict = {'NAME':[],'LABEL':[]}
 
                 for row in reader:
