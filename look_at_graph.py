@@ -1,8 +1,8 @@
 import tensorflow as tf 
 import numpy as np 
 
-model_meta = 'mode.ckpt.meta' # Meta file
-model_stuff = 'model.ckpt' # same path no .meta
+model_meta = '/home/kmylonakis/Dropbox/Network-Comparisons/d_models/28x28x1_10/Wf_EM1/model.ckpt-2.meta' # Meta file
+model_stuff = '/home/kmylonakis/Dropbox/Network-Comparisons/d_models/28x28x1_10/Wf_EM1/model.ckpt-2' # same path no .meta
 # Placeholder for feeding the hungry hungry model
 t_input = tf.placeholder(np.float32, 
                     shape=[None, 28, 28, 1], 
@@ -29,7 +29,7 @@ with tf.Session() as sess:
             
             fp.write(x+'\n')
     
-    PRINTIT = False
+    PRINTIT = True
     if PRINTIT:
         for x in vars: 
             print(x)

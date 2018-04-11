@@ -138,7 +138,7 @@ if __name__ == '__main__':
                                 conv_spec = [5,16],
                                 num_classes=10,
                                 mnist=True,
-                                stoch_passes=2,
+                                stoch_passes=32,
                                 final_units=10)
     # Test Screen Shots
     #test_screen_shot_model = models.DeepModel(args.block,args.depth, 
