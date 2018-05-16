@@ -15,7 +15,8 @@ class DeepModel:
                     learning_rate=.001,
                     activation=tf.nn.relu,
                     stoch_passes=None,
-                    mnist=False):
+                    mnist=False,
+                    cifar=False):
         """
         Class to create, train, evaluate, save, and make inferences from deep network models.
         Inputs:
@@ -37,11 +38,13 @@ class DeepModel:
             activation: (Optional) Activation function of initial and final layer of network. 
                 Default is relu. (function)
             mnist: (Optional) Whether to load data from mnist or not. 
-                Default is False. (bool)        
+                Default is False. (bool)   
+            cifar: (optional) Whether to load data from the CIFAR10 dataset     
         Returns: DeepModel class with the following attributes
             
             exp_dir: Base directory for exporting .pb files (str)
             mnist: Whether to load data from mnist or not. (bool)
+            cifar: Whether to load data from CIFAR10 or not. (bool)
             model_dir: Base directory to save model files. (str)
             model_spec: Wraps up inputs of __init__ into dictionary. (dict)
 
@@ -50,6 +53,7 @@ class DeepModel:
         """
 
         self.mnsit = mnist
+        self.cifar = cifar
         
         # Saved in model_dir/resolution_classes/block depth
         input_shape_path = 'x'.join([str(n) for n in input_shape])
@@ -99,8 +103,11 @@ class DeepModel:
             # If stochastic add passes to attributes
             ATTRIBUTES['stoch_passes'] = stoch_passes
         
+        print("CHECK MNIST VALUE, ", mnist)
         if mnist:
             ATTRIBUTES['mnist'] = True
+        if cifar:
+            ATTRIBUTES['cifar'] = True
         
         self.model_specs = ATTRIBUTES
         
@@ -164,6 +171,9 @@ class DeepModel:
         # Update export directory for training
         self.exp_dir = export_dir
 
+        if self.model_specs['cifar']:
+            self.model_dir= os.curdir + os.sep + 'cifar-10-data_model'
+
         from .train_eval_exp import train_and_eval
         train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
                         train_steps=train_steps,
@@ -206,6 +216,8 @@ class DeepModel:
 
         # Make labels key for mnist
         if self.mnsit:
+            labels_dict = {'NAME': range(10), 'LABEL': range(10)}
+        if self.cifar:
             labels_dict = {'NAME': range(10), 'LABEL': range(10)}
         
         else:

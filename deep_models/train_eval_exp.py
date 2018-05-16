@@ -61,13 +61,16 @@ def screen_shot_parser(serialized_example,resolution):
             'label': tf.FixedLenFeature([], tf.int64),
         })
 
-    image = tf.decode_raw(features['image'], tf.float32)
+    image = tf.decode_raw(features['image'], tf.uint8)
 
     # Normalize the values of the image from the range [0, 255] to [-0.5, 0.5]
     image = tf.cast(image, tf.float32) / 255 - 0.5
+    
 
     # Real small now
-    image =  tf.reshape(image, list(resolution))
+    # resolution must be 3x32x32
+    image =  tf.reshape(image, [list(resolution)[2],list(resolution)[0],list(resolution)[1]])
+    image = tf.transpose(image,perm=[1,2,0])
 
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
@@ -126,6 +129,51 @@ def screen_shot_input_fn(name,resolution,
 
     return features
 
+def cifar_input_fn(name,resolution,
+                    file_dir = ['TFRecords'],
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100):
+    """
+    The input function for training, testing, and evaluation.
+    Inputs:
+        file_dir: Directory where the tfrecords are stored. Default is ['TFRecords']. (list)
+        name: What mode is the model in. Must be from {'train','test','eval'}. (str)
+        num_epochs: Number of repeats for dataset. (int)
+        shuffle: Whether to shuffle input. Default True. (bool)
+        batch_size: Batch size of input. Also the buffer size. Default 100. (int)
+    """
+    # Get games
+    #file_dir = file_dir
+    
+    filenames = os.path.join(os.curdir , os.path.join(file_dir[0] , name + '.tfrecords'))
+    #print("=================== filenames, ",filenames)
+    # Import image data
+    dataset = tf.data.TFRecordDataset(filenames)
+    
+    if shuffle:
+        dataset = dataset.shuffle(buffer_size = batch_size)
+
+    # Map the parser over dataset, and batch results by up to batch_size
+    # Shuffling and batching can be slow
+    # get more resources
+    num_slaves = mp.cpu_count()
+    print("=================resolution", resolution)
+    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution),num_parallel_calls=num_slaves)
+    
+    # Buffer the batch size of data
+    dataset = dataset.prefetch(batch_size)
+
+    # Batch it and make iterator
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.repeat(count=num_epochs)
+    iterator = dataset.make_one_shot_iterator()
+    
+    features = iterator.get_next()
+    print("=============features shape", features)
+
+    return features
+
 
 # Wrap up resolutions
 def screen_shot_input_fn_28x28(name,file_dir = ['TFRecords'],
@@ -146,10 +194,20 @@ def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
                     shuffle = shuffle,
                     batch_size = 100)
 
+def cifar(name,file_dir = ['cifar-10-data'],
+                    num_epochs = None,
+                    shuffle = True,
+                    batch_size = 100):
+    return cifar_input_fn(name,(32,32,3),file_dir = file_dir,
+                    num_epochs = None,
+                    shuffle = shuffle,
+                    batch_size = 100)
+
 # Dictionary of available input functions
 INPUT_FNS= {(28,28,3):screen_shot_input_fn_28x28,
             (224,224,3):screen_shot_input_fn_224x224,
-            (28,28,1):'mnist'}
+            (28,28,1):'mnist',
+            (32,32,3):cifar}
 
 # Training routines
 

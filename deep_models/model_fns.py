@@ -14,7 +14,8 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
             'conv_spec': [filter size, number of filters] (list),
             'classes': number of classes (int),
             'learning_rate': learning rate for training (float)
-            'mnist': whether data is mnist. (bool)
+            'mnist': whether data is mnist. (bool),
+            'cifar': whether data is cifar. (bool)
                         }
     """
     
@@ -33,6 +34,10 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
 
     if 'mnist' in exp_spec.keys():
         input_shape = (28,28,1)
+
+    if 'cifar' in exp_spec.keys():
+        input_shape = (32,32,3)
+        #input_shape = (16,16,3)
     
     
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
@@ -60,9 +65,9 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     block_fn = block
     Deep = tf.contrib.layers.repeat(conv0,
                                         depth,
-                                        block_fn, 
-                                        h,
-                                        conv_spec, scope='Deep')
+                                        block_fn,
+                                        dt,
+                                        conv_spec)
 
     # Dense Layer
     # Make sure size matches Deep
@@ -153,6 +158,10 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
     if 'mnist' in exp_spec.keys():
         input_shape = (28,28,1)
+
+    if 'cifar' in exp_spec.keys():
+        input_shape = (32,32,3)
+        #input_shape = (16,16,3)
 
     block, depth, input_shape = exp_spec['block'], exp_spec['depth'], exp_spec['input_shape']
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']

@@ -118,7 +118,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
 
 # Residual Stochastic Convolutional Layer
 # This corresponds to Weak Explicit Euler-Maruyama
-def Wf_EM(input_layer, dt, shape, scope,name):
+def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
     """
     Explicit Euler Maruyama block with two  non-interactign branches, stochastic and deterministic\
     each has 2 convolutional layers then a residual shortcut.
@@ -127,6 +127,8 @@ def Wf_EM(input_layer, dt, shape, scope,name):
     """
 
     size, filters = shape
+    #filters=16
+    #size=shape
     # Initialize Diagonal noise
     dz = tf.random_normal(tf.shape(input_layer))
     dz = tf.sign(dz)
