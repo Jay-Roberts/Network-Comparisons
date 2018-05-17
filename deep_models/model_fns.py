@@ -104,23 +104,37 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
 
     # Calculate Loss (for both TRAIN and EVAL modes)
     loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    
+    # Keep track of loss
+    tf.summary.scalar("loss",loss)
+    summary_hook = tf.train.SummarySaverHook(
+            save_steps = 100,
+            output_dir='./TBTraining',
+            summary_op=tf.summary.merge_all())
 
     # Configure the Training Op (for TRAIN mode)
     if mode == tf.estimator.ModeKeys.TRAIN:
         print('Training')
+        
         optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+        
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+        
+        return tf.estimator.EstimatorSpec(mode=mode,
+                                         loss=loss, 
+                                         train_op=train_op, 
+                                         training_hooks=[summary_hook])
 
-    # Add evaluation metrics (for EVAL mode)
-    eval_metric_ops = {
-        "accuracy": tf.metrics.accuracy(
-            labels=labels, predictions=predictions["classes"])}
-    print('Evaluating')
-    return tf.estimator.EstimatorSpec(
-        mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+    if mode == tf.estimator.ModeKeys.EVAL:
+        # Add evaluation metrics (for EVAL mode)
+        eval_metric_ops = {
+            "accuracy": tf.metrics.accuracy(
+                labels=labels, predictions=predictions["classes"])}
+        print('Evaluating')
+        return tf.estimator.EstimatorSpec(
+            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
 
 # Strong Stochastic CNN
@@ -270,7 +284,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
     tf.summary.scalar("loss",loss)
     summary_hook = tf.train.SummarySaverHook(
-            save_steps = 1,
+            save_steps = 100,
             output_dir='./TBTraining',
             summary_op=tf.summary.merge_all())
 
@@ -294,7 +308,10 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
             global_step=tf.train.get_global_step())
         
         
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[summary_hook])
+        return tf.estimator.EstimatorSpec(mode=mode,
+                                         loss=loss, 
+                                         train_op=train_op, 
+                                         training_hooks=[summary_hook])
 
     if mode == tf.estimator.ModeKeys.EVAL:
         # Add evaluation metrics (for EVAL mode)
@@ -302,6 +319,8 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
             "accuracy": tf.metrics.accuracy(
                 labels=labels, predictions=predictions["classes"])}
         print('Evaluating')
-        return tf.estimator.EstimatorSpec(
-            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+        return tf.estimator.EstimatorSpec(mode=mode, 
+                                        loss=loss, 
+                                        eval_metric_ops=eval_metric_ops, 
+                                        evaluation_hooks=[summary_hook])
 
