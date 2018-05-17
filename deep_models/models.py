@@ -108,6 +108,8 @@ class DeepModel:
             ATTRIBUTES['mnist'] = True
         if cifar:
             ATTRIBUTES['cifar'] = True
+        else:
+            ATTRIBUTES['mnist'], ATTRIBUTES['cifar'] = False, False
         
         self.model_specs = ATTRIBUTES
         
@@ -137,7 +139,8 @@ class DeepModel:
                                                                         mode=mode)
     
     # Define the training and evaluation routine
-    def train_and_eval(self,data_dir,exp_dir,
+    def train_and_eval(self,exp_dir,
+                        data_dir=None,
                         train_steps=None,
                         train_epochs=None,
                         train_batch=100,
@@ -175,7 +178,8 @@ class DeepModel:
             self.model_dir= os.curdir + os.sep + 'cifar-10-data_model'
 
         from .train_eval_exp import train_and_eval
-        train_and_eval(data_dir, self.model_fn,self.model_dir,in_shp,export_dir,
+        train_and_eval(self.model_fn,self.model_dir,in_shp,export_dir,
+                        data_dir=data_dir, 
                         train_steps=train_steps,
                         train_batch=train_batch,
                         train_epochs=train_epochs,

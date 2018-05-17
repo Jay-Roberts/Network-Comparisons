@@ -11,6 +11,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # Input Arguments
 
+    # Test Data to Choose
+    parser.add_argument(
+        '--test',
+        help='Which data to test on. Premade {MNIST, CIFAR}, CIFAR corresponds to cifar10 dataset',
+        type=str,
+        )
+
     # Model Specs
     parser.add_argument(
         '--block',
@@ -32,7 +39,6 @@ if __name__ == '__main__':
         '--resolution',
         help='reolution of images in tfrecords files',
         type=int,
-        required=True,
         nargs=2
     )
 
@@ -46,8 +52,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--file-dir',
         help='GCS or local paths to tf record data. Must be organized data/gameID/{test,train,val}',
-        nargs='+',
-        required=True
+        nargs='+'
     )
 
     parser.add_argument(
@@ -125,43 +130,73 @@ if __name__ == '__main__':
     # Get derived model inputs.
     #
     
-    # Input function from the resolution
-    input_fn = 'screen_shots_'+str(args.resolution[0])
-    input_shape =tuple( args.resolution + [3])
 
-    # Find number of classes in TFRecords directory
-    classes = len(os.listdir(args.file_dir[0]))
+    if args.test is not None:
+        test = args.test 
+        test = test.lower()
+    else:
+        test = 'Custom'
 
-    # Test MNIST
-    test_screen_shot_model = models.DeepModel(args.block,args.depth, 
-                                input_shape = (32,32,3),
-                                conv_spec = [5,16],
-                                num_classes=10,
-                                mnist=False,
-                                cifar=True,
-                                dt=0.1,
-                                learning_rate=0.001,
-                                activation=tf.nn.relu,
-                                stoch_passes=args.stoch_passes,
-                                final_units=10)
+    if test == 'mnist':
+        # Test MNIST
+        resolution = (28,28,1)
+        test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                    input_shape = resolution,
+                                    conv_spec = [5,16],
+                                    num_classes=10,
+                                    mnist=True,
+                                    cifar=False,
+                                    dt=0.1,
+                                    learning_rate=0.1,
+                                    activation=tf.nn.relu,
+                                    stoch_passes=args.stoch_passes,
+                                    final_units=10)
+
+
+
+    elif test == 'cifar':
+        # Test CIFAR
+        test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                    input_shape = (32,32,3),
+                                    conv_spec = [5,16],
+                                    num_classes=10,
+                                    mnist=False,
+                                    cifar=True,
+                                    dt=0.1,
+                                    learning_rate=0.1,
+                                    activation=tf.nn.relu,
+                                    stoch_passes=args.stoch_passes,
+                                    final_units=10)
 
     # Test Screen Shots
-    #test_screen_shot_model = models.DeepModel(args.block,args.depth, 
-    #                            input_shape = input_shape,
-    #                            conv_spec = [5,16],
-    #                            num_classes=5,
-    #                            dt=0.01,
-    #                            learning_rate=.001,
-    #                            activation=tf.nn.relu,
-    #                            final_units=10,
-    #                            stoch_passes=args.stoch_passes)
-    
+    else:
+
+        assert args.resolution is not None, 'Custom models must have --resolution specified'
+        # Input function from the resolution
+        input_fn = 'screen_shots_'+str(args.resolution[0])
+        input_shape =tuple( args.resolution + [3])
+
+        assert args.file_dir is not None, 'Custom models must have --file-dir specified'
+        # Find number of classes in TFRecords directory
+        classes = len(os.listdir(args.file_dir[0]))
+
+        test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                    input_shape = input_shape,
+                                    conv_spec = [5,16],
+                                    num_classes=5,
+                                    dt=0.01,
+                                    learning_rate=.001,
+                                    activation=tf.nn.relu,
+                                    final_units=10,
+                                    stoch_passes=args.stoch_passes)
+        
     # Train and eval
-    test_screen_shot_model.train_and_eval(args.file_dir[0],'traintest',
+    test_screen_shot_model.train_and_eval('traintest',
+                        data_dir=args.file_dir,
                         train_steps=args.train_steps,
                         eval_steps=args.eval_steps)
     #Predict
-    model_path = test_screen_shot_model.exp_dir
+    #model_path = test_screen_shot_model.exp_dir
     #test_screen_shot_model.predict('/home/jay/Network-Comparisons/otest_images/')
 
 

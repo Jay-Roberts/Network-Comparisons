@@ -211,8 +211,9 @@ INPUT_FNS= {(28,28,3):screen_shot_input_fn_28x28,
 
 # Training routines
 
-def train_and_eval( data_dir,model_fn,model_dir,input_shape,
+def train_and_eval( model_fn,model_dir,input_shape,
                         exp_dir,
+                        data_dir = None,
                         train_steps=None,
                         train_epochs=None,
                         train_batch=100,

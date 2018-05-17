@@ -224,7 +224,10 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
 
     for run in range(passes):
-        Deep = deep_ones(conv0,depth,block,h,conv_spec,scope='deep_twos')
+        Deep = deep_ones(conv0,depth,block,h,conv_spec,name='StochasticPasses')
+
+        if run>0:
+            Deep = tf.stop_gradient(Deep,name='StopIT')
 
         # Dense Layer
         # Make sure size matches Deep
