@@ -234,8 +234,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     
     # Try a basic nonsense output
     # Compress into one output
-    guess = tf.layers.dense(inputs=dense, units=1)
-
+    logits_guess = tf.layers.dense(inputs=dense, units=num_classes)
 
     for run in range(passes):
         Deep = deep_ones(conv0,depth,block,h,conv_spec,name='StochasticPasses')
@@ -257,8 +256,8 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
                                 reuse=tf.AUTO_REUSE)
         
 
-        guess1 = tf.layers.dense(inputs = dense, 
-                                units = 1, 
+        logits_guess1 = tf.layers.dense(inputs = dense, 
+                                units = num_classes, 
                                 #scope='dense_two',
                                 name='inner_guess',
                                 reuse=tf.AUTO_REUSE)
@@ -266,23 +265,30 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         # Try an overly simple output
 
         # Compress into one output
-        guess = tf.add(guess,guess1)
+        logits_guess = tf.add(logits_guess,logits_guess1)
 
     # Make it an average
     normalizer = 1/float(passes-1)
-    guess = tf.scalar_mul(normalizer,guess)
+    logits = tf.scalar_mul(normalizer,logits_guess)
 
-    loop_out = tf.reshape(guess,[-1],name="loop_out")
+    #loop_out = tf.reshape(guess,[-1],name="loop_out")
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
-        "classes": loop_out,
-        "probabilities": tf.zeros([1,1])
+        "classes": tf.argmax(input=logits, axis=1, output_type = tf.int32),
+        "probabilities": tf.nn.softmax(logits, name="softmax")
     }
     
     # Calculate Loss (for both TRAIN and EVAL modes)
-    loss = tf.losses.mean_squared_error(labels,loop_out)
-
+    #loss = tf.losses.mean_squared_error(labels,loop_out)
+    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    #acc = tf.metrics.accuracy(
+    #            labels=labels, predictions=predictions["classes"], name="acc_summary")
+    correct_prediction = tf.equal(labels, predictions["classes"])
+    acc = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     tf.summary.scalar("loss",loss)
+    tf.summary.scalar("accuracy",acc)
+    
+
     summary_hook = tf.train.SummarySaverHook(
             save_steps = 100,
             output_dir='./TBTraining',
