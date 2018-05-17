@@ -266,7 +266,13 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     }
     
     # Calculate Loss (for both TRAIN and EVAL modes)
-    loss = tf.losses.absolute_difference(labels,loop_out)
+    loss = tf.losses.mean_squared_error(labels,loop_out)
+
+    tf.summary.scalar("loss",loss)
+    summary_hook = tf.train.SummarySaverHook(
+            save_steps = 1,
+            output_dir='./TBTraining',
+            summary_op=tf.summary.merge_all())
 
 
     # Here we modify the prediction routine to save exported Estimators after evaluation
@@ -286,13 +292,16 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         train_op = optimizer.minimize(
             loss=loss,
             global_step=tf.train.get_global_step())
-        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op)
+        
+        
+        return tf.estimator.EstimatorSpec(mode=mode, loss=loss, train_op=train_op, training_hooks=[summary_hook])
 
-    # Add evaluation metrics (for EVAL mode)
-    eval_metric_ops = {
-        "accuracy": tf.metrics.accuracy(
-            labels=labels, predictions=predictions["classes"])}
-    print('Evaluating')
-    return tf.estimator.EstimatorSpec(
-        mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
+    if mode == tf.estimator.ModeKeys.EVAL:
+        # Add evaluation metrics (for EVAL mode)
+        eval_metric_ops = {
+            "accuracy": tf.metrics.accuracy(
+                labels=labels, predictions=predictions["classes"])}
+        print('Evaluating')
+        return tf.estimator.EstimatorSpec(
+            mode=mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
