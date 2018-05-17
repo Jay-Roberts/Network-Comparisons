@@ -305,7 +305,7 @@ def train_and_eval( model_fn,model_dir,input_shape,
 
     #Train the model
     classifier.train(train_input,
-                    steps=train_steps,
+                    steps=train_steps
                     )
 
     # Evaluate the model
