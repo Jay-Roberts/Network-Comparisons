@@ -26,7 +26,8 @@ This will create a deep network with an initial convolution layer of 16 filters 
 To train the model.
 
 ```python
-    test_screen_shot_model.train_and_eval('datadir','traintest',
+    test_screen_shot_model.train_and_eval('traintest',
+                                        data_dir='data_dir',
                                         train_steps=2000,
                                         eval_steps=2000)
 ```
@@ -106,7 +107,8 @@ Returns: DeepModel class with following
 
 **Train, Evaluate, Export:**
 ```python
-    DeepModel.train_and_eval(self,data_dir,exp_dir,
+    DeepModel.train_and_eval(self,exp_dir,
+                        data_dir=None,
                         train_steps=None,
                         train_epochs=None,
                         train_batch=100,
@@ -116,11 +118,10 @@ Returns: DeepModel class with following
 ```
 Train, evaluate, and export a saved model. 
 * Inputs:
+    * exp_dir: Directory to export checkpoints and saved model. (str)
     * data_dir: Where the data is stored. Must be accessible by input_fn. 
                 For mnist set to None. (str)
-    * model_fn: The model function to use to construct estimator.
     * input_shape: Image resolution to use in model. (tuple)
-    * exp_dir: Directory to export checkpoints and saved model. (str)
     * train_steps: Number of steps to train for. If None train_epochs must be. (int)
     * train_epochs: Number of epochs to run through training data. If None train_steps must be. (int)
     * train_batch: Batch size to use for training. Default 100. (int)
