@@ -241,9 +241,6 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     for run in range(passes):
         Deep = deep_ones(conv0,depth,block,h,conv_spec,name='StochasticPasses')
 
-        if run>0:
-            Deep = tf.stop_gradient(Deep,name='StopIT')
-
         # Dense Layer
         # Make sure size matches Deep
         Deep_size = input_shape[0]*input_shape[1]*conv_spec[1]
@@ -267,8 +264,8 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         # Try an overly simple output
 
         # Compress into one output
-        print("============SHAPES=========", logits_guess.get_shape(), logits_guess1.get_shape())
         logits_guess = tf.add(logits_guess,logits_guess1)
+
         if run>0:
             Deep = tf.stop_gradient(Deep,name='StopIT_Deep')
             Deep_flat = tf.stop_gradient(Deep_flat, name='StopID_Flat')
@@ -304,7 +301,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     
 
     summary_hook = tf.train.SummarySaverHook(
-            save_steps = 100,
+            save_steps = 500,
             output_dir='./TBTraining',
             summary_op=tf.summary.merge_all())
 
