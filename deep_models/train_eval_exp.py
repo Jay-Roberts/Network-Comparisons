@@ -83,7 +83,7 @@ def screen_shot_input_fn(name,resolution,
                     file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
-                    batch = 128):
+                    batch = 100):
     """
     The input function for training, testing, and evaluation.
     Inputs:
@@ -116,13 +116,14 @@ def screen_shot_input_fn(name,resolution,
     # Shuffling and batching can be slow
     # get more resources
     num_slaves = mp.cpu_count()
-    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution),num_parallel_calls=num_slaves)
+    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
     dataset = dataset.prefetch(batch)
 
     # Batch it and make iterator
-    dataset = dataset.batch(batch)
+    #dataset = dataset.batch(batch)
+    dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
     dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
@@ -131,7 +132,7 @@ def screen_shot_input_fn(name,resolution,
     return features
 
 def cifar_input_fn(name,resolution,
-                    batch = 128,
+                    batch = 100,
                     file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True):
@@ -171,7 +172,8 @@ def cifar_input_fn(name,resolution,
     dataset = dataset.prefetch(batch)
 
     # Batch it and make iterator
-    dataset = dataset.batch(batch)
+    #dataset = dataset.batch(batch)
+    dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
     dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
@@ -203,7 +205,7 @@ def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
 def cifar(name,file_dir = ['cifar-10-data'],
                     num_epochs = None,
                     shuffle = True,
-                    batch = 128):
+                    batch = 100):
     return cifar_input_fn(name,(32,32,3),file_dir = file_dir,
                     num_epochs = None,
                     shuffle = shuffle,
@@ -222,10 +224,10 @@ def train_and_eval( model_fn,model_dir,input_shape,
                         data_dir = None,
                         train_steps=None,
                         train_epochs=None,
-                        train_batch=128,
+                        train_batch=100,
                         eval_steps=None,
                         eval_epochs=None,
-                        eval_batch=128
+                        eval_batch=100
                         ):
     """
     Train, evaluate, and export a saved model. For training and eval either steps or epochs \
@@ -305,9 +307,12 @@ def train_and_eval( model_fn,model_dir,input_shape,
             num_epochs=eval_epochs,
             shuffle=False)
         
+        assert train_batch == eval_batch, '%d is not equal to %d .eval and train batch size should match. '%(train_batch,eval_batch)
+        batch = train_batch
         # Make the feature spec for exporting
         feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = input_shape),
-                        "y":tf.placeholder(dtype = tf.int32,shape = [1])}
+                        "y":tf.placeholder(dtype = tf.int32,shape = [1]),
+                        "batch":tf.placeholder(dtype=tf.float32, shape=[batch])}
 
     #Train the model
     classifier.train(train_input,
@@ -320,6 +325,6 @@ def train_and_eval( model_fn,model_dir,input_shape,
                         steps = eval_steps)
     
     # Export the model
-    classifier.export_savedmodel(exp_dir,
-                        tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
-                        )
+    #classifier.export_savedmodel(exp_dir,
+    #                    tf.estimator.export.build_raw_serving_input_receiver_fn(feature_spec)
+    #                    )
