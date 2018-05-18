@@ -47,10 +47,20 @@ def f_E(input_layer, dt, shape, scope):
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
-        activation=tf.nn.relu)
+        activation=None)
     
+
+    bn = tf.layers.conv2d(
+        fdd,
+        filters,
+        size,
+        padding='same',
+        activation=tf.nn.relu
+
+    )
+
     fd = tf.layers.conv2d(
-        inputs=fdd,
+        inputs=bn,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
@@ -144,12 +154,21 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
-        activation=tf.nn.relu,
+        activation=None,
         reuse=tf.AUTO_REUSE,
         name=name)
 
+    bns = tf.layers.conv2d(
+        fss,
+        filters,
+        size,
+        padding='same',
+        activation=tf.nn.relu
+
+    )
+
     fs = tf.layers.conv2d(
-        inputs=fss,
+        inputs=bns,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
@@ -163,12 +182,21 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
-        activation=tf.nn.relu,
+        activation=None,
         reuse=tf.AUTO_REUSE,
         name=name)
+
+    bnd = tf.layers.conv2d(
+        fdd,
+        filters,
+        size,
+        padding='same',
+        activation=tf.nn.relu
+
+    )
     
     fd = tf.layers.conv2d(
-        inputs=fdd,
+        inputs=bnd,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
         padding="same",
