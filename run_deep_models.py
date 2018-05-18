@@ -141,6 +141,7 @@ if __name__ == '__main__':
         # Test MNIST
         resolution = (28,28,1)
         test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                    model_dir= args.model_dir,
                                     input_shape = resolution,
                                     conv_spec = [5,16],
                                     num_classes=10,
@@ -158,6 +159,7 @@ if __name__ == '__main__':
         # Test CIFAR
         print('============================================Testing on CIFAR10')
         test_screen_shot_model = models.DeepModel(args.block,args.depth, 
+                                    model_dir=args.model_dir,
                                     input_shape = (32,32,3),
                                     conv_spec = [5,16],
                                     num_classes=10,
@@ -183,6 +185,7 @@ if __name__ == '__main__':
 
         test_screen_shot_model = models.DeepModel(args.block,args.depth, 
                                     input_shape = input_shape,
+                                    model_dir= args.model_dir,
                                     conv_spec = [5,16],
                                     num_classes=5,
                                     dt=0.01,
