@@ -5,7 +5,7 @@ DEPTH=1
 FILE_DIR=cifar-10-data
 TRAIN_STEPS=10
 EVAL_STEPS=5
-STOCH_RUNS=0
+STOCH_RUNS=2
 VERBOSITY=INFO # Slows things down. Remove for large scale training.
 
 
