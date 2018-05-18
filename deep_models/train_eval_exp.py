@@ -43,7 +43,7 @@ def join_list(l):
     return result
 
 # Reads the tf.Example files
-def screen_shot_parser(serialized_example,resolution):
+def screen_shot_parser(serialized_example,resolution, batch):
     """Parses a single tf.Example into image and label tensors.
     Inputs:
         serialized_example: A tfrecord with features "image" and "label". (tfrecord)
@@ -72,9 +72,10 @@ def screen_shot_parser(serialized_example,resolution):
     image =  tf.reshape(image, [list(resolution)[2],list(resolution)[0],list(resolution)[1]])
     image = tf.transpose(image,perm=[1,2,0])
 
+    tmp_b = tf.constant(batch,dtype=tf.int32)
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
-    return {"x":image,"y":label}
+    return {"x":image,"y":label, "batch":tmp_b}
 
 
 # The input function
@@ -130,6 +131,7 @@ def screen_shot_input_fn(name,resolution,
     return features
 
 def cifar_input_fn(name,resolution,
+                    batch = 128,
                     file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
@@ -164,7 +166,7 @@ def cifar_input_fn(name,resolution,
     # get more resources
     num_slaves = mp.cpu_count()
     print("=================resolution", resolution)
-    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution),num_parallel_calls=num_slaves)
+    dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
     dataset = dataset.prefetch(batch_size)
