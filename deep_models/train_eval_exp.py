@@ -145,8 +145,13 @@ def cifar_input_fn(name,resolution,
     """
     # Get games
     #file_dir = file_dir
+    print(file_dir,name)
     
-    filenames = os.path.join(os.curdir , os.path.join(file_dir[0] , name + '.tfrecords'))
+    #
+    #       DONT KNOW WHY IT IS NESTED TWICE
+    #
+    
+    filenames = os.path.join(os.curdir , os.path.join(file_dir[0][0] , name + '.tfrecords'))
     #print("=================== filenames, ",filenames)
     # Import image data
     dataset = tf.data.TFRecordDataset(filenames)

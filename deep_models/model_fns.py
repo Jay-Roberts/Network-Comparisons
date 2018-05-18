@@ -44,6 +44,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     num_classes, conv_spec,dt = exp_spec['classes'], exp_spec['conv_spec'], exp_spec['dt']
     activation,learning_rate, final_units = exp_spec['activation'], exp_spec['learning_rate'], exp_spec['final_units']
     
+    print('=======================CLASSES===========================',num_classes)
     # Input Layer
     # Reshape X to 4-D tensor: [batch_size, width, height, channels]
     input_layer = tf.reshape(features["x"], [-1]+list(input_shape))

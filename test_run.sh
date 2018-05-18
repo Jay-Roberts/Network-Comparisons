@@ -1,16 +1,17 @@
 
-MODEL_DIR=test_loop
+MODEL_DIR=d_model
 BLOCK=Wf_EM
 DEPTH=1
 FILE_DIR=cifar-10-data
-TRAIN_STEPS=10000
-EVAL_STEPS=500
+TRAIN_STEPS=10
+EVAL_STEPS=5
 STOCH_RUNS=0
 VERBOSITY=INFO # Slows things down. Remove for large scale training.
 
 
 
 python3 run_deep_models.py \
+        --test cifar \
         --model-dir $MODEL_DIR \
         --block $BLOCK \
         --depth $DEPTH \
