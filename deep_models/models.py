@@ -143,10 +143,10 @@ class DeepModel:
                         data_dir=None,
                         train_steps=None,
                         train_epochs=None,
-                        train_batch=100,
+                        train_batch=128,
                         eval_steps=None,
                         eval_epochs=None,
-                        eval_batch=100):
+                        eval_batch=128):
         """
         Train, evaluate, and export a saved model. For training and eval either steps or epochs \
         must be set or mode will run forever.
