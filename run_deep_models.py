@@ -159,7 +159,7 @@ if __name__ == '__main__':
         print('============================================Testing on CIFAR10')
         test_screen_shot_model = models.DeepModel(args.block,args.depth, 
                                     input_shape = (32,32,3),
-                                    conv_spec = [5,16],
+                                    conv_spec = [3,64],
                                     num_classes=10,
                                     mnist=False,
                                     cifar=True,
