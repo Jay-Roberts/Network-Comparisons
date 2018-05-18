@@ -72,7 +72,7 @@ def screen_shot_parser(serialized_example,resolution, batch):
     image =  tf.reshape(image, [list(resolution)[2],list(resolution)[0],list(resolution)[1]])
     image = tf.transpose(image,perm=[1,2,0])
 
-    tmp_b = tf.constant(batch,dtype=tf.int32)
+    tmp_b = tf.zeros(shape=batch)
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
     return {"x":image,"y":label, "batch":tmp_b}
@@ -83,7 +83,7 @@ def screen_shot_input_fn(name,resolution,
                     file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
-                    batch_size = 100):
+                    batch = 128):
     """
     The input function for training, testing, and evaluation.
     Inputs:
@@ -91,7 +91,7 @@ def screen_shot_input_fn(name,resolution,
         name: What mode is the model in. Must be from {'train','test','eval'}. (str)
         num_epochs: Number of repeats for dataset. (int)
         shuffle: Whether to shuffle input. Default True. (bool)
-        batch_size: Batch size of input. Also the buffer size. Default 100. (int)
+        batch: Batch size of input. Also the buffer size. Default 100. (int)
     """
     # Get games
     file_dir = file_dir[0]
@@ -110,19 +110,19 @@ def screen_shot_input_fn(name,resolution,
     dataset = tf.data.TFRecordDataset(filenames)
     
     if shuffle:
-        dataset = dataset.shuffle(buffer_size = batch_size)
+        dataset = dataset.shuffle(buffer_size = batch)
 
-    # Map the parser over dataset, and batch results by up to batch_size
+    # Map the parser over dataset, and batch results by up to batch
     # Shuffling and batching can be slow
     # get more resources
     num_slaves = mp.cpu_count()
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution),num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
-    dataset = dataset.prefetch(batch_size)
+    dataset = dataset.prefetch(batch)
 
     # Batch it and make iterator
-    dataset = dataset.batch(batch_size)
+    dataset = dataset.batch(batch)
     dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
@@ -134,8 +134,7 @@ def cifar_input_fn(name,resolution,
                     batch = 128,
                     file_dir = ['TFRecords'],
                     num_epochs = None,
-                    shuffle = True,
-                    batch_size = 100):
+                    shuffle = True):
     """
     The input function for training, testing, and evaluation.
     Inputs:
@@ -143,7 +142,7 @@ def cifar_input_fn(name,resolution,
         name: What mode is the model in. Must be from {'train','test','eval'}. (str)
         num_epochs: Number of repeats for dataset. (int)
         shuffle: Whether to shuffle input. Default True. (bool)
-        batch_size: Batch size of input. Also the buffer size. Default 100. (int)
+        batch: Batch size of input. Also the buffer size. Default 100. (int)
     """
     # Get games
     #file_dir = file_dir
@@ -159,9 +158,9 @@ def cifar_input_fn(name,resolution,
     dataset = tf.data.TFRecordDataset(filenames)
     
     if shuffle:
-        dataset = dataset.shuffle(buffer_size = batch_size)
+        dataset = dataset.shuffle(buffer_size = batch)
 
-    # Map the parser over dataset, and batch results by up to batch_size
+    # Map the parser over dataset, and batch results by up to batch
     # Shuffling and batching can be slow
     # get more resources
     num_slaves = mp.cpu_count()
@@ -169,10 +168,10 @@ def cifar_input_fn(name,resolution,
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
     
     # Buffer the batch size of data
-    dataset = dataset.prefetch(batch_size)
+    dataset = dataset.prefetch(batch)
 
     # Batch it and make iterator
-    dataset = dataset.batch(batch_size)
+    dataset = dataset.batch(batch)
     dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
@@ -186,29 +185,29 @@ def cifar_input_fn(name,resolution,
 def screen_shot_input_fn_28x28(name,file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
-                    batch_size = 100):
+                    batch = 100):
     return screen_shot_input_fn(name,(28,28,3),file_dir = file_dir,
                     num_epochs = None,
                     shuffle = shuffle,
-                    batch_size = 100)
+                    batch = 100)
 
 def screen_shot_input_fn_224x224(name,file_dir = ['TFRecords'],
                     num_epochs = None,
                     shuffle = True,
-                    batch_size = 100):
+                    batch = 100):
     return screen_shot_input_fn(name,(224,224,3),file_dir = file_dir,
                     num_epochs = None,
                     shuffle = shuffle,
-                    batch_size = 100)
+                    batch = 100)
 
 def cifar(name,file_dir = ['cifar-10-data'],
                     num_epochs = None,
                     shuffle = True,
-                    batch_size = 100):
+                    batch = 128):
     return cifar_input_fn(name,(32,32,3),file_dir = file_dir,
                     num_epochs = None,
                     shuffle = shuffle,
-                    batch_size = 100)
+                    batch = batch)
 
 # Dictionary of available input functions
 INPUT_FNS= {(28,28,3):screen_shot_input_fn_28x28,
@@ -276,13 +275,13 @@ def train_and_eval( model_fn,model_dir,input_shape,
 
         train_input = tf.estimator.inputs.numpy_input_fn(
             x={"x": train_data, "y": train_labels},
-            batch_size=train_batch,
+            batch=train_batch,
             num_epochs=train_epochs,
             shuffle=True)
         
         eval_input = tf.estimator.inputs.numpy_input_fn(
             x={"x": eval_data, "y": eval_labels},
-            batch_size=eval_batch,
+            batch=eval_batch,
             num_epochs=eval_epochs,
             shuffle=False)
         
@@ -297,12 +296,12 @@ def train_and_eval( model_fn,model_dir,input_shape,
         train_input = lambda: input_fn('train',
             file_dir = [data_dir],
             num_epochs=train_epochs,
-            batch_size=train_batch)
+            batch=train_batch)
 
         # Don't shuffle evaluation data
         eval_input = lambda: input_fn('eval', 
             file_dir=[data_dir],
-            batch_size=eval_batch,
+            batch=eval_batch,
             num_epochs=eval_epochs,
             shuffle=False)
         
