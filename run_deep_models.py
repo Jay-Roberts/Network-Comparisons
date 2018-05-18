@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     elif test == 'cifar':
         # Test CIFAR
-        print('============================================Testing on CIFAR10')
+        
         test_screen_shot_model = models.DeepModel(args.block,args.depth, 
                                     model_dir=args.model_dir,
                                     input_shape = (32,32,3),
@@ -195,7 +195,7 @@ if __name__ == '__main__':
                                     stoch_passes=args.stoch_passes)
         
     # Train and eval
-    print('=============================================Training and Evaluating')
+    
     test_screen_shot_model.train_and_eval('traintest',
                         data_dir=args.file_dir,
                         train_steps=args.train_steps,
