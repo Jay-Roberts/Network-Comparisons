@@ -1,5 +1,5 @@
 
-MODEL_DIR=d_model
+MODEL_DIR=cifar-10-data-models
 BLOCK=Wf_EM
 DEPTH=1
 FILE_DIR=cifar-10-data

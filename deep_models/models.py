@@ -174,10 +174,12 @@ class DeepModel:
         # Update export directory for training
         self.exp_dir = export_dir
 
-        if self.model_specs['cifar']:
-            self.model_dir= os.curdir + os.sep + 'cifar-10-data_model'
+        #if self.model_specs['cifar']:
+        #    self.model_dir= os.curdir + os.sep + 'cifar-10-data_model'
 
+        
         from .train_eval_exp import train_and_eval
+        
         train_and_eval(self.model_fn,self.model_dir,in_shp,export_dir,
                         data_dir=data_dir, 
                         train_steps=train_steps,
