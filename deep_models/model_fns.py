@@ -189,7 +189,9 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     input_layer = tf.reshape(features["x"], [-1]+list(input_shape))
 
     labels = features["y"]   
-    batch_size = features['batch'].get_shape()[1]
+    #batch_size = features['batch'].get_shape()[1]
+    #batch_size = features['batch']
+    #print("===========Batch size", batch_size)
     
     # Initial convolution layer
     kernel_size, filters = conv_spec
@@ -221,24 +223,42 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
     # Run the process once to initialize kernels and get guess
     h = dt
-    #Deep = deep_ones(conv0,depth,block,h,conv_spec)
+    Deep = deep_ones(conv0,depth,block,h,conv_spec,name='StochasticPasses')
     
     # Dense Layer
     # Make sure size matches Deep
     Deep_size = input_shape[0]*input_shape[1]*conv_spec[1]
-    #Deep_flat = tf.reshape(Deep, [-1, Deep_size])
+    Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     # Combine the convolution features
-    #dense = tf.layers.dense(inputs=Deep_flat,
-    #                        units=final_units,
-    #                        activation=tf.nn.relu,
-    #                        )
+    dense = tf.layers.dense(inputs=Deep_flat,
+                            units=final_units,
+                            activation=tf.nn.relu,
+                            name='inner_dense'
+                            )
     
     # Try a basic nonsense output
     # Compress into one output
-    logits_guess = tf.zeros(shape=[batch_size,num_classes])
+    #logits_guess = tf.zeros(shape=[batch_size,num_classes])
+    # Initialize one layer of network
+
+    
+    logits_guess = tf.layers.dense(inputs = dense, 
+                                units = num_classes, 
+                                #scope='dense_two',
+                                name='inner_guess',
+                                reuse=tf.AUTO_REUSE)
+    
+    
 
     for run in range(passes):
+        
+        Deep = tf.stop_gradient(Deep,name='StopIT_Deep')
+        Deep_flat = tf.stop_gradient(Deep_flat, name='StopID_Flat')
+        dense = tf.stop_gradient(dense,name='StopIT_dense')
+        
+
+
         Deep = deep_ones(conv0,depth,block,h,conv_spec,name='StochasticPasses')
 
         # Dense Layer
@@ -262,15 +282,16 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
                                 reuse=tf.AUTO_REUSE)
         
         # Try an overly simple output
+        logits_guess1 = tf.stop_gradient(logits_guess1,name='StopIT_logits')
 
         # Compress into one output
         logits_guess = tf.add(logits_guess,logits_guess1)
 
-        if run>0:
-            Deep = tf.stop_gradient(Deep,name='StopIT_Deep')
-            Deep_flat = tf.stop_gradient(Deep_flat, name='StopID_Flat')
-            dense = tf.stop_gradient(dense,name='StopIT_dense')
-            logits_guess1 = tf.stop_gradient(logits_guess1,name='StopIT_logits')
+        #if run>0:
+        #    Deep = tf.stop_gradient(Deep,name='StopIT_Deep')
+        #    Deep_flat = tf.stop_gradient(Deep_flat, name='StopID_Flat')
+        #    dense = tf.stop_gradient(dense,name='StopIT_dense')
+        #    logits_guess1 = tf.stop_gradient(logits_guess1,name='StopIT_logits')
 
         
 

@@ -72,10 +72,11 @@ def screen_shot_parser(serialized_example,resolution, batch):
     image =  tf.reshape(image, [list(resolution)[2],list(resolution)[0],list(resolution)[1]])
     image = tf.transpose(image,perm=[1,2,0])
 
-    tmp_b = tf.zeros(shape=batch)
+    #tmp_b = tf.zeros(shape=batch)
+    #new_batch = tmp_b.get_shape()
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
-    return {"x":image,"y":label, "batch":tmp_b}
+    return {"x":image,"y":label}
 
 
 # The input function
@@ -174,7 +175,7 @@ def cifar_input_fn(name,resolution,
     # Batch it and make iterator
     #dataset = dataset.batch(batch)
     dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
-    dataset = dataset.repeat(count=num_epochs)
+    #dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
     features = iterator.get_next()
@@ -308,13 +309,14 @@ def train_and_eval( model_fn,model_dir,input_shape,
             shuffle=False)
         
         assert train_batch == eval_batch, '%d is not equal to %d .eval and train batch size should match. '%(train_batch,eval_batch)
-        batch = train_batch
+        #batch = train_batch
         # Make the feature spec for exporting
-        feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = input_shape),
-                        "y":tf.placeholder(dtype = tf.int32,shape = [1]),
-                        "batch":tf.placeholder(dtype=tf.float32, shape=[batch])}
+        #feature_spec = {"x":tf.placeholder(dtype=tf.float32,shape = input_shape),
+        #                "y":tf.placeholder(dtype = tf.int32,shape = [1]),
+        #                "batch":tf.placeholder(dtype=tf.float32, shape=[batch])}
 
     #Train the model
+    print("=============Train Steps====", train_steps)
     classifier.train(train_input,
                     steps=train_steps
                     )

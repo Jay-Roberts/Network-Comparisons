@@ -195,7 +195,7 @@ if __name__ == '__main__':
                                     stoch_passes=args.stoch_passes)
         
     # Train and eval
-    
+    #print("=============Train Steps====", args.train_steps)
     test_screen_shot_model.train_and_eval('traintest',
                         data_dir=args.file_dir,
                         train_steps=args.train_steps,
