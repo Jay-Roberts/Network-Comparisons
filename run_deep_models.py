@@ -162,6 +162,7 @@ if __name__ == '__main__':
                                     model_dir=args.model_dir,
                                     input_shape = (32,32,3),
                                     conv_spec = [3,64],
+                                    #conv_spec = [3,4],
                                     num_classes=10,
                                     mnist=False,
                                     cifar=True,
@@ -199,6 +200,7 @@ if __name__ == '__main__':
     test_screen_shot_model.train_and_eval('traintest',
                         data_dir=args.file_dir,
                         train_steps=args.train_steps,
+                        #train_steps=None,
                         eval_steps=args.eval_steps)
     #Predict
     #model_path = test_screen_shot_model.exp_dir

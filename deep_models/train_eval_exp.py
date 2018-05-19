@@ -173,9 +173,9 @@ def cifar_input_fn(name,resolution,
     dataset = dataset.prefetch(batch)
 
     # Batch it and make iterator
-    #dataset = dataset.batch(batch)
-    dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
-    #dataset = dataset.repeat(count=num_epochs)
+    dataset = dataset.batch(batch)
+    #dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
+    dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
     
     features = iterator.get_next()
@@ -316,7 +316,7 @@ def train_and_eval( model_fn,model_dir,input_shape,
         #                "batch":tf.placeholder(dtype=tf.float32, shape=[batch])}
 
     #Train the model
-    print("=============Train Steps====", train_steps)
+    #print("=============Train Steps====", train_steps)
     classifier.train(train_input,
                     steps=train_steps
                     )
