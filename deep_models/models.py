@@ -115,8 +115,12 @@ class DeepModel:
         
         # Check for old model compatability
         if old_atr:
+            tmp_old = old_atr.pop('learning_rate', None)
+            tmp_attrib = ATTRIBUTES.pop('learning_rate', None)
             assert ATTRIBUTES == old_atr, "Existing model parameters do not match current model.\
                                         Remove existing model or rename new model_dir."
+            old_atr['learning_rate'] = tmp_old
+            ATTRIBUTES['learning_rate'] = tmp_attrib
         else:
             with open(att_path,'wb') as attr_file:
                 pickle.dump(ATTRIBUTES, attr_file)
