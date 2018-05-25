@@ -57,6 +57,7 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
         inputs=input_layer,
         filters=filters,
         kernel_size=kernel_size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=activation)
     
@@ -77,12 +78,12 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     Deep_flat = tf.reshape(Deep, [-1, Deep_size])
 
     # Ideally units is 1024, but using small value to allow for GPU Training on my GTX 970. Experiment here for the P100's
-    dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu)
+    dense = tf.layers.dense(inputs=Deep_flat, units=final_units, activation=tf.nn.relu, kernel_regularizer=tf.nn.l2_loss)
     dropout = tf.layers.dropout( inputs=dense, rate=0.4, training=mode == tf.estimator.ModeKeys.TRAIN)
     last = dropout
     # Logits Layer
     # Units is number of games
-    logits = tf.layers.dense(inputs=last, units=num_classes)
+    logits = tf.layers.dense(inputs=last, units=num_classes, kernel_regularizer=tf.nn.l2_loss,)
 
     predictions = {
         # Generate predictions (for PREDICT and EVAL mode)
@@ -104,7 +105,9 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
                                         export_outputs=exp_outs)
 
     # Calculate Loss (for both TRAIN and EVAL modes)
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    tf.losses.add_loss(tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits))
+    loss = tf.losses.get_total_loss()
     
     # Keep track of loss
     tf.summary.scalar("loss",loss)
@@ -200,6 +203,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         inputs=input_layer,
         filters=filters,
         kernel_size=kernel_size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=activation,
         name='InitConv')
@@ -233,6 +237,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     # Combine the convolution features
     dense = tf.layers.dense(inputs=Deep_flat,
                             units=final_units,
+                            kernel_regularizer=tf.nn.l2_loss,
                             activation=tf.nn.relu,
                             name='inner_dense'
                             )
@@ -245,6 +250,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     
     logits_guess = tf.layers.dense(inputs = dense, 
                                 units = num_classes, 
+                                kernel_regularizer=tf.nn.l2_loss,
                                 #scope='dense_two',
                                 name='inner_guess',
                                 reuse=tf.AUTO_REUSE)
@@ -270,6 +276,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
         dense = tf.layers.dense(inputs=Deep_flat,
                                 units=final_units,
                                 activation=tf.nn.relu,
+                                kernel_regularizer=tf.nn.l2_loss,
                                 #scope='dense_two',
                                 name='inner_dense',
                                 reuse=tf.AUTO_REUSE)
@@ -277,6 +284,7 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
 
         logits_guess1 = tf.layers.dense(inputs = dense, 
                                 units = num_classes, 
+                                kernel_regularizer=tf.nn.l2_loss,
                                 #scope='dense_two',
                                 name='inner_guess',
                                 reuse=tf.AUTO_REUSE)
@@ -312,7 +320,9 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     
     # Calculate Loss (for both TRAIN and EVAL modes)
     #loss = tf.losses.mean_squared_error(labels,loop_out)
-    loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
+    tf.losses.add_loss(tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits))
+    loss = tf.losses.get_total_loss()
     #acc = tf.metrics.accuracy(
     #            labels=labels, predictions=predictions["classes"], name="acc_summary")
     correct_prediction = tf.equal(labels, predictions["classes"])

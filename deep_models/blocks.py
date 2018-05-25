@@ -20,6 +20,7 @@ def van(input_layer, dt, shape, scope):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu)
     
@@ -27,6 +28,7 @@ def van(input_layer, dt, shape, scope):
         inputs=fdd,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu)
 
@@ -46,6 +48,7 @@ def f_E(input_layer, dt, shape, scope):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=None)
     
@@ -55,7 +58,8 @@ def f_E(input_layer, dt, shape, scope):
         filters,
         size,
         padding='same',
-        activation=tf.nn.relu
+        activation=tf.nn.relu,
+        kernel_regularizer=tf.nn.l2_loss
 
     )
 
@@ -63,6 +67,7 @@ def f_E(input_layer, dt, shape, scope):
         inputs=bn,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu)
 
@@ -91,6 +96,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,
@@ -100,6 +106,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
         inputs=fss,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,
@@ -110,6 +117,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,
@@ -119,6 +127,7 @@ def Sf_EM(input_layer, dt, shape, scope,name):
         inputs=fdd,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,
@@ -153,6 +162,7 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=None,
         reuse=tf.AUTO_REUSE,
@@ -163,7 +173,8 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         filters,
         size,
         padding='same',
-        activation=tf.nn.relu
+        activation=tf.nn.relu,
+        kernel_regularizer=tf.nn.l2_loss
 
     )
 
@@ -171,6 +182,7 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         inputs=bns,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,
@@ -181,6 +193,7 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         inputs=input_layer,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=None,
         reuse=tf.AUTO_REUSE,
@@ -191,7 +204,8 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         filters,
         size,
         padding='same',
-        activation=tf.nn.relu
+        activation=tf.nn.relu,
+        kernel_regularizer=tf.nn.l2_loss
 
     )
     
@@ -199,6 +213,7 @@ def Wf_EM(input_layer, dt, shape, scope='Deep',name='weak_stochastic'):
         inputs=bnd,
         filters=filters,
         kernel_size=size, # Make small to allow for more layers
+        kernel_regularizer=tf.nn.l2_loss,
         padding="same",
         activation=tf.nn.relu,
         reuse=tf.AUTO_REUSE,

@@ -166,7 +166,7 @@ if __name__ == '__main__':
                                     num_classes=10,
                                     mnist=False,
                                     cifar=True,
-                                    dt=0.1,
+                                    dt=0.001,
                                     learning_rate=0.1,
                                     activation=tf.nn.relu,
                                     stoch_passes=args.stoch_passes,
