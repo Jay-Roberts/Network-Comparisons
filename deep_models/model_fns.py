@@ -107,7 +107,9 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     # Calculate Loss (for both TRAIN and EVAL modes)
     #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
     tf.losses.add_loss(tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits))
-    loss = tf.losses.get_total_loss()
+    regularization_coefficient = h
+    loss = tf.add(tf.losses.get_total_loss(add_regularization_losses=False),
+                    regularization_coefficient*tf.losses.get_regularization_loss() )
     
     # Keep track of loss
     tf.summary.scalar("loss",loss)
@@ -322,7 +324,9 @@ def weak_stoch_model_fn(exp_spec,features=None,labels=None,mode=None):
     #loss = tf.losses.mean_squared_error(labels,loop_out)
     #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
     tf.losses.add_loss(tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits))
-    loss = tf.losses.get_total_loss()
+    regularization_coefficient = h
+    loss = tf.add(tf.losses.get_total_loss(add_regularization_losses=False),
+                    regularization_coefficient*tf.losses.get_regularization_loss() )
     #acc = tf.metrics.accuracy(
     #            labels=labels, predictions=predictions["classes"], name="acc_summary")
     correct_prediction = tf.equal(labels, predictions["classes"])
