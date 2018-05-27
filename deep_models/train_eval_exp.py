@@ -131,6 +131,7 @@ def screen_shot_parser(serialized_example,resolution, batch):
     #new_batch = tmp_b.get_shape()
     # No longer returning label
     label = tf.cast(features['label'], tf.int32)
+
     return {"x":image,"y":label}
 
 
@@ -224,7 +225,7 @@ def cifar_input_fn(name,resolution,
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
     
     # Create a distorted dataset
-    distorted_dataset = dataset
+    distorted_dataset = dataset.apply( distort_cirfar_img_dataset(resolution[0], resolution[1]) )
     dataset = dataset.concatenate(distorted_dataset)
 
     if shuffle:
