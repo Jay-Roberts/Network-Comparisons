@@ -42,6 +42,56 @@ def join_list(l):
         result+=x
     return result
 
+
+
+# distort images in cifar data-set 
+# Modified from: 
+#       https://github.com/tensorflow/models/blob/master/tutorials/image/cifar10/cifar10_input.py
+def distort_cifar_feature_img(feature,height,width):
+
+    # Unpack feature from dataset
+    image = feature['x']
+    label = feature['y']
+
+    # Randomly crop a [height, width] section of the image.
+    
+    # Turn this on later
+    #distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
+    distorted_image = image
+    height, width = 32, 32  # Remove this when crop is implemented.
+
+    # Randomly flip the image horizontally.
+    distorted_image = tf.image.random_flip_left_right(distorted_image)
+
+    # Because these operations are not commutative, consider randomizing
+    # the order their operation.
+    # NOTE: since per_image_standardization zeros the mean and makes
+    # the stddev unit, this likely has no effect see tensorflow#1458.
+    distorted_image = tf.image.random_brightness(distorted_image,
+                                                 max_delta=63)
+    distorted_image = tf.image.random_contrast(distorted_image,
+                                               lower=0.2, upper=1.8)
+
+
+    # Set the shapes of tensors.
+    distorted_image.set_shape([height, width, 3])
+    
+    return {'x': distorted_image, 'y':label}
+
+# Wrap distortion for dataset.apply() methods
+def distort_cirfar_img_dataset(height, width):
+    
+    def trans_func(dataset,h,w):
+        return dataset.map(lambda x: distort_cifar_feature_img(x,height,width))
+        
+    return lambda x: trans_func(x,height,width)
+
+
+
+
+#def distort_Dataset(data_set):
+
+
 # Reads the tf.Example files
 def screen_shot_parser(serialized_example,resolution, batch):
     """Parses a single tf.Example into image and label tensors.
@@ -69,6 +119,11 @@ def screen_shot_parser(serialized_example,resolution, batch):
 
     # Real small now
     # resolution must be 3x32x32
+
+    #
+    # SWITCH FOR SCREEN SHOTS
+    #
+
     image =  tf.reshape(image, [list(resolution)[2],list(resolution)[0],list(resolution)[1]])
     image = tf.transpose(image,perm=[1,2,0])
 
@@ -168,7 +223,7 @@ def cifar_input_fn(name,resolution,
     num_slaves = mp.cpu_count()
     print("=================resolution", resolution)
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
-    
+
     # Buffer the batch size of data
     dataset = dataset.prefetch(batch)
 
