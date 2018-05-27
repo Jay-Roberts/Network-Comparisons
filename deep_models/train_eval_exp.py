@@ -214,8 +214,7 @@ def cifar_input_fn(name,resolution,
     # Import image data
     dataset = tf.data.TFRecordDataset(filenames)
     
-    if shuffle:
-        dataset = dataset.shuffle(buffer_size = batch)
+
 
     # Map the parser over dataset, and batch results by up to batch
     # Shuffling and batching can be slow
@@ -223,9 +222,14 @@ def cifar_input_fn(name,resolution,
     num_slaves = mp.cpu_count()
     print("=================resolution", resolution)
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
+    
+    # Create a distorted dataset
+    distorted_dataset = dataset
+    dataset = dataset.concatenate(distorted_dataset)
 
-    # Buffer the batch size of data
-    dataset = dataset.prefetch(batch)
+    if shuffle:
+        #dataset = dataset.shuffle(buffer_size = batch)
+        dataset = dataset.shuffle(buffer_size = 50000)
 
     # Batch it and make iterator
     dataset = dataset.batch(batch)
@@ -235,6 +239,11 @@ def cifar_input_fn(name,resolution,
     
     features = iterator.get_next()
     print("=============features shape", features)
+
+
+    # Buffer the batch size of data
+    #dataset = dataset.prefetch(batch)
+    dataset = dataset.prefetch(50000)
 
     return features
 
