@@ -107,7 +107,8 @@ def model_fn(exp_spec,features=None,labels=None,mode=None):
     # Calculate Loss (for both TRAIN and EVAL modes)
     #loss = tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits)
     tf.losses.add_loss(tf.losses.sparse_softmax_cross_entropy(labels=labels, logits=logits))
-    regularization_coefficient = h
+    #regularization_coefficient = h
+    regularization_coefficient = 1.00
     loss = tf.add(tf.losses.get_total_loss(add_regularization_losses=False),
                     regularization_coefficient*tf.losses.get_regularization_loss() )
     
