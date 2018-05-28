@@ -224,7 +224,7 @@ def cifar_input_fn(name,resolution,
     print("=================resolution", resolution)
     dataset = dataset.map(lambda x: screen_shot_parser(x,resolution,batch),num_parallel_calls=num_slaves)
     
-    # Create a distorted dataset
+    ## Create a distorted dataset
     distorted_dataset = dataset.apply( distort_cirfar_img_dataset(resolution[0], resolution[1]) )
     dataset = dataset.concatenate(distorted_dataset)
 
@@ -241,7 +241,36 @@ def cifar_input_fn(name,resolution,
     features = iterator.get_next()
     print("=============features shape", features)
 
+    #
+    #
+    #   CHECKS FIRST 100 images from batch for visual inspection
+    #
+    #
+    check_on_images = False
+    
+    if check_on_images:
+        image = features['x']
+        
+        with tf.Session() as sess:
+            img = sess.run(image)
+            img = (img+.5)*255
+            img = img.astype(np.uint8)
+            print(img.shape)
 
+
+            import matplotlib.pyplot as plt 
+            
+            ig, axs = plt.subplots(10,10)
+            #fig.subplots_adjust(hspace = .5, wspace=.001)
+            axs = axs.ravel()
+            for i in range(100):
+                
+                axs[i].imshow(img[i,...])
+                #plt.subplot((2,3,i))
+                #plt.imshow(img[i,...])
+        plt.show()
+        
+        assert 1 ==0, 'break'
     # Buffer the batch size of data
     #dataset = dataset.prefetch(batch)
     dataset = dataset.prefetch(50000)
