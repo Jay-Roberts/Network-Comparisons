@@ -57,7 +57,7 @@ def distort_cifar_feature_img(feature,height,width):
     
     # Turn this on later
     #distorted_image = tf.random_crop(reshaped_image, [height, width, 3])
-    distorted_image = image
+    distorted_image = tf.cast( (image + 0.5) * 255 , tf.uint8)
     height, width = 32, 32  # Remove this when crop is implemented.
 
     # Randomly flip the image horizontally.
@@ -68,13 +68,15 @@ def distort_cifar_feature_img(feature,height,width):
     # NOTE: since per_image_standardization zeros the mean and makes
     # the stddev unit, this likely has no effect see tensorflow#1458.
     distorted_image = tf.image.random_brightness(distorted_image,
-                                                 max_delta=63)
+                                                 max_delta=0.247)
     distorted_image = tf.image.random_contrast(distorted_image,
-                                               lower=0.2, upper=1.8)
+                                               lower=0.25, upper=0.8)
 
 
     # Set the shapes of tensors.
     distorted_image.set_shape([height, width, 3])
+
+    distorted_image = tf.cast(distorted_image, tf.float32)/255.0 - 0.5
     
     return {'x': distorted_image, 'y':label}
 
@@ -234,11 +236,14 @@ def cifar_input_fn(name,resolution,
 
     # Batch it and make iterator
     dataset = dataset.batch(batch)
+    #distorted_dataset = distorted_dataset.batch(batch)
     #dataset = dataset.apply(tf.contrib.data.batch_and_drop_remainder(batch))
     dataset = dataset.repeat(count=num_epochs)
     iterator = dataset.make_one_shot_iterator()
+    #distorted_iterator = distorted_dataset.make_one_shot_iterator()
     
     features = iterator.get_next()
+    #distorted_features = distorted_iterator.get_next()
     print("=============features shape", features)
 
     #
@@ -246,15 +251,19 @@ def cifar_input_fn(name,resolution,
     #   CHECKS FIRST 100 images from batch for visual inspection
     #
     #
+    #dataset = distorted_dataset
     check_on_images = False
     
     if check_on_images:
         image = features['x']
+        distorted_image = distorted_features['x']
         
         with tf.Session() as sess:
-            img = sess.run(image)
+            img, d_img = sess.run([image, distorted_image])
             img = (img+.5)*255
             img = img.astype(np.uint8)
+            d_img = (d_img+.5)*255
+            d_img = d_img.astype(np.uint8)
             print(img.shape)
 
 
@@ -266,6 +275,15 @@ def cifar_input_fn(name,resolution,
             for i in range(100):
                 
                 axs[i].imshow(img[i,...])
+                #plt.subplot((2,3,i))
+                #plt.imshow(img[i,...])
+
+            d_ig, d_axs = plt.subplots(10,10)
+            #fig.subplots_adjust(hspace = .5, wspace=.001)
+            d_axs = d_axs.ravel()
+            for i in range(100):
+                
+                d_axs[i].imshow(d_img[i,...])
                 #plt.subplot((2,3,i))
                 #plt.imshow(img[i,...])
         plt.show()
